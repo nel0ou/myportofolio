@@ -19,12 +19,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-d8+)_ufb+2da!-3k2djwyxu*c%bfbrmway#vv-&py*4@@snurt'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-d8+)_ufb+2da!-3k2djwyxu*c%bfbrmway#vv-&py*4@@snurt')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# DEBUG otomatis False jika PRODUCTION=True di PWS
+PRODUCTION = os.getenv('PRODUCTION', 'False').lower() == 'true'
+DEBUG = not PRODUCTION
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1","naila-salsabila51-myportofolio.pws.cs.ui.ac.id"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "naila-salsabila51-myportofolio.pws.cs.ui.ac.id"]
 
 
 # Application definition
@@ -71,8 +72,6 @@ WSGI_APPLICATION = 'portofolio.wsgi.application'
 
 # Database configuration
 
-PRODUCTION = os.getenv('PRODUCTION', 'False').lower() == 'true'
-
 if PRODUCTION:
     DATABASES = {
         'default': {
@@ -81,9 +80,9 @@ if PRODUCTION:
             'USER': os.getenv('DB_USER'),
             'PASSWORD': os.getenv('DB_PASSWORD'),
             'HOST': os.getenv('DB_HOST'),
-            'PORT': os.getenv('DB_PORT'),
+            'PORT': os.getenv('DB_PORT', '5432'),
             'OPTIONS': {
-                'options': f"-c search_path={os.getenv('SCHEMA', 'public')}"
+                'options': f"-c search_path={os.getenv('SCHEMA') or 'public'}"
             }
         }
     }
@@ -130,7 +129,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
-WHITENOISE_USE_FINDERS = True  # <-- Tambahkan baris ini di bawahnya
+WHITENOISE_USE_FINDERS = True
 
 
 # Email
