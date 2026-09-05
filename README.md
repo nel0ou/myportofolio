@@ -1,4 +1,4 @@
-Nama : Nela
+Nama : Naila Salsabila
 
 NPM : 2506620702
 
