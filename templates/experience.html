@@ -1,0 +1,70 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Experience - {{ name }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <a href="{% url 'main:show_main' %}" class="brand">{{ name }}</a>
+            <nav>
+                <a href="{% url 'main:show_main' %}">Profile</a>
+                <a href="{% url 'main:show_experience' %}">Experience</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container" style="padding-top: 3rem; padding-bottom: 3rem;">
+        <p class="section-kicker">My journey so far</p>
+        
+        <!-- Section Experience -->
+        <section class="experience-section" id="experience">
+            <div class="container">
+                <h2 class="section-title">Experience</h2>
+                <div class="timeline">
+                    <article class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <span class="timeline-date">2026 - Sekarang</span>
+                            <h3>PIC Public Relations</h3>
+                            <p class="timeline-org">Open House Fasilkom UI 2026</p>
+                            <p>Memimpin dan mengarahkan staff PR dalam mengenalkan Fasilkom UI kepada siswa SMA, orang tua, dan publik, serta mengelola strategi branding seluruh rangkaian acara Open House.</p>
+                        </div>
+                    </article>
+                    <article class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <span class="timeline-date">2026 - Sekarang</span>
+                            <h3>Staff Humas</h3>
+                            <p class="timeline-org">BEM Fasilkom UI 2026</p>
+                            <p>Bertindak sebagai Master of Ceremonies (MC) dalam beberapa acara, mengelola media sosial BEM, serta menjadi Penanggung Jawab komunikasi antara BEM dengan pihak eksternal.</p>
+                        </div>
+                    </article>
+                    <article class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <span class="timeline-date">2026 - Sekarang</span>
+                            <h3>Member of People Operations</h3>
+                            <p class="timeline-org">RISTEK Fasilkom UI 2026</p>
+                            <p>Berperan sebagai HR internal dalam mengelola manajemen talenta, merancang program pengembangan sumber daya manusia, serta menjaga kesejahteraan dan kultur kerja anggota RISTEK.</p>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>&copy; 2026 {{ name }}. Fakultas Ilmu Komputer, Universitas Indonesia.</p>
+        </div>
+    </footer>
+</body>
+</html>

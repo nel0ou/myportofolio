@@ -6,10 +6,7 @@ def show_main(request):
         "name": "Naila Salsabila",
         "npm": "2506620702",
         "study_program": "S1 Sistem Informasi",
-        "bio": (
-            "S1 Information System student at Fasilkom UI. Passionate about "
-            "modern web development, system analysis, and technology innovation."
-        ),
+        "bio": "A Computer Science student at Universitas Indonesia interested in software development and education.",
     }
     return render(request, "index.html", context)
 
