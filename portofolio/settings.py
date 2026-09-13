@@ -77,6 +77,7 @@ WSGI_APPLICATION = 'portofolio.wsgi.application'
 
 
 # Database configuration
+# Database configuration
 
 if PRODUCTION:
     DATABASES = {
@@ -87,9 +88,6 @@ if PRODUCTION:
             'PASSWORD': os.getenv('DB_PASSWORD'),
             'HOST': os.getenv('DB_HOST'),
             'PORT': os.getenv('DB_PORT', '5432'),
-            'OPTIONS': {
-                'options': f"-c search_path={os.getenv('SCHEMA') or 'public'}"
-            }
         }
     }
 else:
@@ -132,19 +130,12 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-WHITENOISE_USE_FINDERS = True
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-
-# Email
-
-MAILERS = {
-    'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
-    },
-}
+# Media files (PDF Uploads, Images)
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = BASE_DIR / 'media'
