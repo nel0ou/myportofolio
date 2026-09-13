@@ -28,6 +28,10 @@ DEBUG = not PRODUCTION
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "naila-salsabila51-myportofolio.pws.cs.ui.ac.id"]
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://naila-salsabila51-myportofolio.pws.cs.ui.ac.id",
+    "https://*.pws.cs.ui.ac.id",
+]
 
 # Application definition
 
