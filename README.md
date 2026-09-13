@@ -4,10 +4,10 @@ NPM : 2506620702
 
 Kelas : PBP C
 
-Link Aplikasi (PWS): contoh: https://pws.cs.ui.ac.id/web/project/naila.salsabila51/myportofolio/env
+Link Aplikasi (PWS): https://naila-salsabila51-myportofolio.pws.cs.ui.ac.id/
 
 
-Saya senang pengambil mata kuliah PBP karena saya dapat belajar membuat website dengan kereativitas saya.
+Saya senang mengambil mata kuliah PBP karena saya dapat belajar membuat website dengan kreativitas saya.
 
 ### Assignment 1
 
@@ -39,16 +39,14 @@ Dalam pengerjaan Assignment 1 ini, saya memanfaatkan Generator AI (Gemini AI) se
 
 # Tugas 2 PBP
 
----
-
 ## Jawaban Pertanyaan Tugas
 
 ### 1. Buatlah peta alur data (request-response) pada Django dan jelaskan keterkaitannya!
 Alur permintaan dan tanggapan (*request-response*) pada Django bekerja dengan tahapan berikut:
 1. **Client Request:** Pengguna mengirimkan permintaan (*request*) dengan mengakses URL tertentu melalui *browser* (misalnya `/projects/`).
 2. **URL Routing (`urls.py`):** Django mencocokkan pola URL yang diminta dengan pemetaan yang ada di `urls.py` untuk menentukan fungsi *view* mana yang harus dipanggil.
-3. **View Logic (`views.py`):** Fungsi *view* memproses logika aplikasi. Jika membutuhkan data dari *database*, *view* akan berkomunikasi dengan *Model*.
-4. **Model Interaction (`models.py`):** Model mengambil atau memanipulasi data di *database* (SQLite), lalu mengembalikan data tersebut ke *view*.
+3. **View Logic (`views.py`):** Fungsi *view* memproses logika aplikasi, menyiapkan context data (baik dari database maupun struktur data Python), dan meneruskannya ke template.
+4. **Model Interaction (`models.py`):** Model mengambil atau memanipulasi data di *database*, lalu mengembalikan data tersebut ke *view*.
 5. **Template Rendering (`templates/`):** *View* menyisipkan data ke dalam berkas HTML (*template*) menggunakan sintaks Django Template Language (DTL).
 6. **HTTP Response:** Server mengirimkan berkas HTML yang sudah selesai dirender kembali ke *browser* pengguna sebagai tanggapan (*response*).
 
@@ -57,18 +55,17 @@ Git adalah sistem pengontrol versi (*Version Control System*) terdistribusi yang
 * Mencatat riwayat perubahan (*version history*) pada kode program secara terstruktur.
 * Memudahkan kolaborasi tim dalam pengerjaan proyek tanpa saling menimpa kode satu sama lain.
 * Memungkinkan pembuatan cabang (*branching*) untuk mengembangkan fitur baru secara terisolasi sebelum digabungkan (*merge*) ke kode utama.
-* Memfasilitasi proses *rollback* (kembali ke versi kode sebelumnya) jika terjadi masalah atau *error* pada kode terbaru.
+* Memasilitasi proses *rollback* (kembali ke versi kode sebelumnya) jika terjadi masalah atau *error* pada kode terbaru.
 
 ### 3. Mengapa *virtual environment* digunakan? Apakah kita tetap bisa membuat aplikasi web Django tanpa *virtual environment*?
 
 * **Alasan Penggunaan:** *Virtual environment* digunakan untuk mengisolasi pustaka (*packages/dependencies*) Python khusus untuk satu proyek tertentu. Hal ini mencegah terjadinya bentrok versi (*version conflict*) antar pustaka jika komputer kamu mengerjakan beberapa proyek Python berbeda.
-* **Apakah tetap bisa tanpa *virtual environment*?** Ya, aplikasi tetap bisa dibuat. Namun, semua pustaka akan terpasang secara global di sistem komputer, yang berisiko merusak fungsionalidad proyek lain jika ada perubahan versi pustaka secara global.
+* **Apakah tetap bisa tanpa *virtual environment*?** Ya, aplikasi tetap bisa dibuat. Namun, semua pustaka akan terpasang secara global di sistem komputer, yang berisiko merusak fungsionalitas proyek lain jika ada perubahan versi pustaka secara global.
 
 ### 4. Jelaskan bagaimana cara kamu mengimplementasikan checklist di atas secara step-by-step!
 
 1. **Inisialisasi Proyek & Environment:** Membuat *virtual environment*, menginstal Django, serta membuat proyek Django baru beserta *app* utama (`main`).
-2. **Merancang Model (`models.py`):** Membuat struktur model data seperti `Project` dan `Experience` beserta atributnya (termasuk `FileField` untuk dokumen PDF), lalu melakukan `makemigrations` dan `migrate`.
-3. **Membuat Views & URL Routing (`views.py` & `urls.py`):** Merancang fungsi *view* untuk menampilkan halaman Profile, Experience, dan Projects, lalu menyambungkan pemetaan URL-nya.
-4. **Mengubah Template HTML (`templates/`):** Mengintegrasikan data dinamis dari *database* ke template HTML serta menambahkan tautan kondisional untuk mengunduh/melihat PDF projek.
-5. **Konfigurasi Admin & Media:** Mendaftarkan model di `admin.py`, mengatur `MEDIA_URL` dan `MEDIA_ROOT` di `settings.py`, lalu memasukkan data projek dan berkas PDF melalui Django Admin.
-6. **Deployment:** Membuat berkas `requirements.txt`, mengunggah seluruh kode ke GitHub, dan melakukan *deployment* ke PWS.
+2. **Merancang Model (`models.py`):** Membuat struktur model data seperti `Project` dan `Experience` beserta atributnya (termasuk `URLField` untuk menyimpan tautan dokumen/Google Drive proyek), lalu melakukan `makemigrations` dan `migrate`.
+3. **Membuat Views & URL Routing (`views.py` & `urls.py`):** Merancang fungsi *view* untuk menampilkan halaman Profile, Experience, dan Projects, menyusun *context data*, lalu menyambungkan pemetaan URL-nya.
+4. **Mengubah Template HTML (`templates/`):** Mengintegrasikan data dinamis ke template HTML (`projects.html`) serta menambahkan tombol/tautan kondisional (`{% if project.link_url %}`) untuk membuka dokumen proyek di Google Drive.
+5. **Deployment:** Membuat berkas `requirements.txt`, mengunggah seluruh kode ke repositori Git, dan melakukan *deployment* ke PWS agar situs dapat diakses secara publik.
