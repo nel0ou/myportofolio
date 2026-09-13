@@ -31,10 +31,10 @@
                     <p>{{ project.description }}</p>
                     <p style="margin-top: 0.5rem; font-weight: 600; color: var(--accent-dark);">Tech Stack: {{ project.tech_stack }}</p>
                     
-                    {% if project.pdf_file %}
+                    {% if project.link_url %}
                         <div style="margin-top: 1rem;">
-                            <a href="{{ project.pdf_file.url }}" target="_blank" style="display: inline-block; padding: 0.5rem 1rem; background-color: var(--accent-dark, #007bff); color: white; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 0.875rem;">
-                                📄 Lihat Dokumen PDF
+                            <a href="{{ project.link_url }}" target="_blank" style="display: inline-block; padding: 0.5rem 1rem; background-color: var(--accent-dark, #007bff); color: white; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 0.875rem;">
+                                🔗 Lihat Dokumen / Link Project
                             </a>
                         </div>
                     {% endif %}
