@@ -24,7 +24,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-d8+)_ufb+2da!-3k2djwyxu*c%
 
 # DEBUG otomatis False jika PRODUCTION=True di PWS
 PRODUCTION = os.getenv('PRODUCTION', 'False').lower() == 'true'
-DEBUG = not PRODUCTION
+DEBUG = True 
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "naila-salsabila51-myportofolio.pws.cs.ui.ac.id"]
 
