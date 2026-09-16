@@ -11,11 +11,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-d8+)_ufb+2da!-3k2djwyxu*c%bfbrmway#vv-&py*4@@snurt')
 
-# DEBUG & PRODUCTION configuration
 PRODUCTION = os.getenv('PRODUCTION', 'False').lower() == 'true'
 DEBUG = True 
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "naila-salsabila51-myportofolio.pws.cs.ui.ac.id"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "naila-salsabila51-myportofolio.pws.cs.ui.ac.id", "*.pws.cs.ui.ac.id"]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://naila-salsabila51-myportofolio.pws.cs.ui.ac.id",
@@ -24,7 +23,7 @@ CSRF_TRUSTED_ORIGINS = [
 
 # Application definition
 INSTALLED_APPS = [
-    'django.contrib.admin',
+    'django.contrib.admin',  # Wajib ada agar routing portofolio/urls.py tidak crash
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -63,8 +62,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'portofolio.wsgi.application'
 
-# Database configuration
-# Menggunakan SQLite agar tidak terjadi 'OperationalError: Connection refused' di PWS
+# Database configuration menggunakan SQLite
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -100,6 +98,6 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Media files (PDF Uploads, Images)
+# Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
