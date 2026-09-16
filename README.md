@@ -69,3 +69,34 @@ Git adalah sistem pengontrol versi (*Version Control System*) terdistribusi yang
 3. **Membuat Views & URL Routing (`views.py` & `urls.py`):** Merancang fungsi *view* untuk menampilkan halaman Profile, Experience, dan Projects, menyusun *context data*, lalu menyambungkan pemetaan URL-nya.
 4. **Mengubah Template HTML (`templates/`):** Mengintegrasikan data dinamis ke template HTML (`projects.html`) serta menambahkan tombol/tautan kondisional (`{% if project.link_url %}`) untuk membuka dokumen proyek di Google Drive.
 5. **Deployment:** Membuat berkas `requirements.txt`, mengunggah seluruh kode ke repositori Git, dan melakukan *deployment* ke PWS agar situs dapat diakses secara publik.
+
+# Tugas 3 PBP
+### 1. Mengapa memerlukan Data Delivery dalam pengembangan aplikasi web?
+Data Delivery (seperti format JSON atau XML) dibutuhkan sebagai media pertukaran data antara server dan *client*. Format ini mengirimkan data mentah tanpa tampilan HTML, sehingga lebih ringan, hemat *bandwidth*, dan bisa dikonsumsi oleh berbagai platform *client* (seperti frontend React/Vue, aplikasi mobile, maupun API pihak ketiga).
+
+### 2. Perbedaan antara POST dan GET pada protokol HTTP
+* **GET:** Digunakan untuk **mengambil/membaca** data dari server. Data dikirimkan lewat URL (*query string*), dapat disimpan di *cache* browser, dan kurang aman untuk data sensitif.
+* **POST:** Digunakan untuk **mengirim, menambah, atau mengedit** data di server. Data dikirimkan melalui *request body* (tidak tampil di URL), tidak disimpan di *cache*, dan memerlukan proteksi CSRF.
+
+### 3. Mengapa menggunakan `ModelForm` dibandingkan `Form` biasa di Django?
+`ModelForm` secara otomatis terhubung langsung dengan model database yang sudah kita buat di `models.py`. Keunggulannya:
+* Tidak perlu mendefinisikan ulang field form satu per satu (*DRY*).
+* Menyediakan fungsi `.save()` bawaan untuk langsung menyimpan data ke database.
+* Otomatis mengadopsi aturan validasi yang ada pada model.
+
+### 4. Fungsi `csrf_token` pada form Django
+`csrf_token` berfungsi melindungi aplikasi dari serangan *Cross-Site Request Forgery* (CSRF) dengan menghasilkan token unik saat pengiriman form POST. Tanpa tag `{% csrf_token %}`, Django akan menolak pengiriman form dan mengembalikan *error* **`403 Forbidden`**.
+
+### 5. Langkah-langkah implementasi Tugas 3
+1. **Membuat Form (`main/forms.py`):** Membuat kelas `ProjectForm` menggunakan `ModelForm` yang terhubung dengan model `Project`.
+2. **Logika Views (`main/views.py`):**
+   * Mengubah `show_project` untuk mengambil data dari database via ORM.
+   * Membuat fungsi `create_project` untuk memproses input form POST.
+   * Membuat fungsi `delete_project` untuk menghapus data berdasarkan ID (UUID).
+   * Membuat fungsi `show_json` untuk menyajikan data proyek dalam format JSON menggunakan `serializers`.
+3. **Routing (`main/urls.py`):** Mendaftarkan path untuk `projects/create/`, `projects/<uuid:id>/delete/`, dan `json/`.
+4. **Template HTML (`templates/`):**
+   * Membuat `projects_form.html` lengkap dengan tag form, CSRF token, dan tombol simpan.
+   * Memperbarui `projects.html` dengan menambahkan tombol **+ Tambah Project** dan tombol **Hapus**.
+5. **Django Admin (`main/admin.py`):** Mendaftarkan model `Experience` dan `Project` agar data bisa dikelola via dashboard admin.
+6. **Migrasi & Deploy:** Jalankan migrasi database, uji coba seluruh alur di server lokal, lalu lakukan `git commit` dan `git push pws main`.

@@ -23,7 +23,11 @@
     </header>
 
     <main class="container" style="padding-top: 3rem; padding-bottom: 3rem;">
-        <h2 class="section-title">Projects</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h2 class="section-title" style="margin-bottom: 0;">Projects</h2>
+            <a href="{% url 'main:create_project' %}" class="social-link" style="text-decoration: none;">+ Tambah Project</a>
+        </div>
+
         <div class="skills-grid">
             {% for project in project_list %}
                 <div class="skill-card">
@@ -38,6 +42,13 @@
                             </a>
                         </div>
                     {% endif %}
+
+                    <form method="POST" action="{% url 'main:delete_project' project.id %}" style="margin-top: 1rem;">
+                        {% csrf_token %}
+                        <button type="submit" onclick="return confirm('Yakin ingin menghapus proyek ini?')" style="background-color: var(--accent, #dc3545); color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600;">
+                            Hapus
+                        </button>
+                    </form>
                 </div>
             {% empty %}
                 <p>Belum ada proyek yang ditampilkan.</p>

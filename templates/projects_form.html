@@ -1,0 +1,42 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tambah Project - {{ name }}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <a href="{% url 'main:show_main' %}" class="brand">{{ name }}</a>
+            <nav>
+                <a href="{% url 'main:show_main' %}">Profile</a>
+                <a href="{% url 'main:show_experience' %}">Experience</a>
+                <a href="{% url 'main:show_project' %}">Projects</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container" style="padding-top: 3rem; padding-bottom: 3rem;">
+        <h2 class="section-title">Tambah Proyek Baru</h2>
+        <form method="POST" style="max-width: 600px;">
+            {% csrf_token %}
+            {% for field in form %}
+                <div style="margin-bottom: 1.25rem;">
+                    <label for="{{ field.id_for_label }}" style="font-weight: 600; display: block;">{{ field.label }}</label>
+                    {{ field }}
+                    {% for error in field.errors %}
+                        <p style="color: var(--accent); font-size: 0.85rem; margin-top: 0.25rem;">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+            <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem;">
+                <button type="submit" class="social-link" style="border: none; cursor: pointer;">Simpan</button>
+                <a href="{% url 'main:show_project' %}" class="social-link" style="background-color: var(--text-muted);">Batal</a>
+            </div>
+        </form>
+    </main>
+</body>
+</html>
