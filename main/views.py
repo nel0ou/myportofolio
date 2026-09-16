@@ -24,8 +24,8 @@ def show_experience(request):
     return render(request, "experience.html", context)
 
 def show_project(request):
-    # Data proyek bawaan kamu tetap disimpannn di sini
-    default_projects = [
+    # Menggunakan daftar proyek langsung (tanpa panggil database)
+    project_list = [
         {
             'title': 'AmanIn – Smart Campus Safety Platform',
             'description': 'Peran: Chief Marketing Officer (CMO). Platform keamanan kampus berbasis aplikasi mobile yang menyediakan fitur Quick Report, Crowdsourced Map, 24/7 HelpDesk, dan Friend Tracker untuk meningkatkan keselamatan mahasiswa di Universitas Indonesia.',
@@ -45,11 +45,6 @@ def show_project(request):
             'link_url': 'https://drive.google.com/drive/folders/1Rp7k9mNJO8VdLxNzI99Aqmldf7zFdWOO'
         },
     ]
-
-    db_projects = Project.objects.all()
-
-    # Jika DB kosong, pakai proyek bawaan. Jika DB ada isinya, pakai data DB.
-    project_list = db_projects if db_projects.exists() else default_projects
 
     context = {
         "name": "Naila Salsabila",
