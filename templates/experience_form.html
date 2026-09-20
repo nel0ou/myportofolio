@@ -1,10 +1,9 @@
 {% extends 'base.html' %}
 
-{% block title %}Form Project - {{ name }}{% endblock %}
+{% block title %}Form Experience - {{ name }}{% endblock %}
 
 {% block content %}
-<h2 class="section-title">Form Proyek</h2>
-
+<h2 class="section-title">Form Pengalaman</h2>
 <form method="POST" style="max-width: 600px;">
     {% csrf_token %}
     {% for field in form %}
@@ -16,10 +15,9 @@
             {% endfor %}
         </div>
     {% endfor %}
-    
     <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem;">
         <button type="submit" class="social-link" style="border: none; cursor: pointer;">Simpan</button>
-        <a href="{% url 'main:show_project' %}" class="social-link" style="background-color: var(--text-muted);">Batal</a>
+        <a href="{% url 'main:show_experience' %}" class="social-link" style="background-color: var(--text-muted);">Batal</a>
     </div>
 </form>
 {% endblock %}

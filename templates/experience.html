@@ -1,70 +1,56 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Experience - {{ name }}</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-</head>
-<body>
-    <header class="site-header">
-        <div class="container">
-            <a href="{% url 'main:show_main' %}" class="brand">{{ name }}</a>
-            <nav>
-                <a href="{% url 'main:show_main' %}">Profile</a>
-                <a href="{% url 'main:show_experience' %}">Experience</a>
-                <a href="{% url 'main:show_project' %}">Projects</a>
-            </nav>
-        </div>
-    </header>
+{% extends 'base.html' %}
 
-    <main class="container" style="padding-top: 3rem; padding-bottom: 3rem;">
-        
-        <!-- Section Experience -->
-        <section class="experience-section" id="experience">
-            <div class="container">
-                <h2 class="section-title">Experience</h2>
-                <div class="timeline">
-                    <article class="timeline-item">
-                        <div class="timeline-dot"></div>
-                        <div class="timeline-content">
-                            <span class="timeline-date">2026 - Sekarang</span>
-                            <h3>PIC Public Relations</h3>
-                            <p class="timeline-org">Open House Fasilkom UI 2026</p>
-                            <p>Memimpin dan mengarahkan staff PR dalam mengenalkan Fasilkom UI kepada siswa SMA, orang tua, dan publik, serta mengelola strategi branding seluruh rangkaian acara Open House.</p>
-                        </div>
-                    </article>
-                    <article class="timeline-item">
-                        <div class="timeline-dot"></div>
-                        <div class="timeline-content">
-                            <span class="timeline-date">2026 - Sekarang</span>
-                            <h3>Staff Humas</h3>
-                            <p class="timeline-org">BEM Fasilkom UI 2026</p>
-                            <p>Bertindak sebagai Master of Ceremonies (MC) dalam beberapa acara, mengelola media sosial BEM, serta menjadi Penanggung Jawab komunikasi antara BEM dengan pihak eksternal.</p>
-                        </div>
-                    </article>
-                    <article class="timeline-item">
-                        <div class="timeline-dot"></div>
-                        <div class="timeline-content">
-                            <span class="timeline-date">2026 - Sekarang</span>
-                            <h3>Member of People Operations</h3>
-                            <p class="timeline-org">RISTEK Fasilkom UI 2026</p>
-                            <p>Berperan sebagai HR internal dalam mengelola manajemen talenta, merancang program pengembangan sumber daya manusia, serta menjaga kesejahteraan dan kultur kerja anggota RISTEK.</p>
-                        </div>
-                    </article>
+{% block title %}Experience - {{ name }}{% endblock %}
+
+{% block content %}
+<section class="experience-section" id="experience">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2 class="section-title" style="margin-bottom: 0;">Experience</h2>
+        <a href="{% url 'main:create_experience' %}" class="social-link" style="text-decoration: none;">+ Tambah Experience</a>
+    </div>
+
+    <div class="timeline">
+        {% for exp in experience_list %}
+            <article class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    
+                    <!-- PERUBAHAN TAMPILAN RENTANG WAKTU -->
+                    <span class="timeline-date">
+                        {% if exp.started_at %}
+                            {{ exp.started_at|date:"F Y" }}
+                        {% endif %}
+
+                        {% if exp.is_ongoing %}
+                            - Sekarang
+                        {% elif exp.ended_at %}
+                            - {{ exp.ended_at|date:"F Y" }}
+                        {% endif %}
+                    </span>
+                    
+                    <h3>{{ exp.title }}</h3>
+                    {% if exp.category %}
+                        <p class="timeline-org">{{ exp.category }}</p>
+                    {% endif %}
+                    <p>{{ exp.description }}</p>
+
+                    <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                        <a href="{% url 'main:edit_experience' exp.id %}" style="background-color: #ffc107; color: black; padding: 0.3rem 0.6rem; border-radius: 4px; text-decoration: none; font-size: 0.8rem; font-weight: 600;">
+                            Edit
+                        </a>
+                        
+                        <form method="POST" action="{% url 'main:delete_experience' exp.id %}">
+                            {% csrf_token %}
+                            <button type="submit" onclick="return confirm('Yakin ingin menghapus pengalaman ini?')" style="background-color: var(--accent, #dc3545); color: white; border: none; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600;">
+                                Hapus
+                            </button>
+                        </form>
+                    </div>
                 </div>
-            </div>
-        </section>
-    </main>
-
-    <footer class="site-footer">
-        <div class="container">
-            <p>&copy; 2026 {{ name }}. Fakultas Ilmu Komputer, Universitas Indonesia.</p>
-        </div>
-    </footer>
-</body>
-</html>
+            </article>
+        {% empty %}
+            <p>Belum ada pengalaman yang ditampilkan.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

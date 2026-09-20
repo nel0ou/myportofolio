@@ -1,65 +1,42 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Projects - {{ name }}</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-</head>
-<body>
-    <header class="site-header">
-        <div class="container">
-            <a href="{% url 'main:show_main' %}" class="brand">{{ name }}</a>
-            <nav>
-                <a href="{% url 'main:show_main' %}">Profile</a>
-                <a href="{% url 'main:show_experience' %}">Experience</a>
-                <a href="{% url 'main:show_project' %}">Projects</a>
-            </nav>
-        </div>
-    </header>
+{% extends 'base.html' %}
 
-    <main class="container" style="padding-top: 3rem; padding-bottom: 3rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-            <h2 class="section-title" style="margin-bottom: 0;">Projects</h2>
-            <a href="{% url 'main:create_project' %}" class="social-link" style="text-decoration: none;">+ Tambah Project</a>
-        </div>
+{% block title %}Projects - {{ name }}{% endblock %}
 
-        <div class="skills-grid">
-            {% for project in project_list %}
-                <div class="skill-card">
-                    <h3>{{ project.title }}</h3>
-                    <p>{{ project.description }}</p>
-                    <p style="margin-top: 0.5rem; font-weight: 600; color: var(--accent-dark);">Tech Stack: {{ project.tech_stack }}</p>
-                    
-                    {% if project.link_url %}
-                        <div style="margin-top: 1rem;">
-                            <a href="{{ project.link_url }}" target="_blank" style="display: inline-block; padding: 0.5rem 1rem; background-color: var(--accent-dark, #007bff); color: white; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 0.875rem;">
-                                🔗 Lihat Dokumen / Link Project
-                            </a>
-                        </div>
-                    {% endif %}
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h2 class="section-title" style="margin-bottom: 0;">Projects</h2>
+    <a href="{% url 'main:create_project' %}" class="social-link" style="text-decoration: none;">+ Tambah Project</a>
+</div>
 
-                    <form method="POST" action="{% url 'main:delete_project' project.id %}" style="margin-top: 1rem;">
-                        {% csrf_token %}
-                        <button type="submit" onclick="return confirm('Yakin ingin menghapus proyek ini?')" style="background-color: var(--accent, #dc3545); color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600;">
-                            Hapus
-                        </button>
-                    </form>
+<div class="skills-grid">
+    {% for project in project_list %}
+        <div class="skill-card">
+            <h3>{{ project.title }}</h3>
+            <p>{{ project.description }}</p>
+            <p style="margin-top: 0.5rem; font-weight: 600; color: var(--accent-dark);">Tech Stack: {{ project.tech_stack }}</p>
+            
+            {% if project.link_url %}
+                <div style="margin-top: 1rem;">
+                    <a href="{{ project.link_url }}" target="_blank" style="display: inline-block; padding: 0.5rem 1rem; background-color: var(--accent-dark, #007bff); color: white; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 0.875rem;">
+                        🔗 Lihat Dokumen / Link Project
+                    </a>
                 </div>
-            {% empty %}
-                <p>Belum ada proyek yang ditampilkan.</p>
-            {% endfor %}
-        </div>
-    </main>
+            {% endif %}
 
-    <footer class="site-footer">
-        <div class="container">
-            <p>&copy; 2026 {{ name }}. Fakultas Ilmu Komputer, Universitas Indonesia.</p>
+            <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                <a href="{% url 'main:edit_project' project.id %}" style="background-color: #ffc107; color: black; padding: 0.4rem 0.8rem; border-radius: 4px; text-decoration: none; font-size: 0.8rem; font-weight: 600;">
+                    Edit
+                </a>
+                <form method="POST" action="{% url 'main:delete_project' project.id %}">
+                    {% csrf_token %}
+                    <button type="submit" onclick="return confirm('Yakin ingin menghapus proyek ini?')" style="background-color: var(--accent, #dc3545); color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600;">
+                        Hapus
+                    </button>
+                </form>
+            </div>
         </div>
-    </footer>
-</body>
-</html>
+    {% empty %}
+        <p>Belum ada proyek yang ditampilkan.</p>
+    {% endfor %}
+</div>
+{% endblock %}
