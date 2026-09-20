@@ -100,3 +100,52 @@ Data Delivery (seperti format JSON atau XML) dibutuhkan sebagai media pertukaran
    * Memperbarui `projects.html` dengan menambahkan tombol **+ Tambah Project** dan tombol **Hapus**.
 5. **Django Admin (`main/admin.py`):** Mendaftarkan model `Experience` dan `Project` agar data bisa dikelola via dashboard admin.
 6. **Migrasi & Deploy:** Jalankan migrasi database, uji coba seluruh alur di server lokal, lalu lakukan `git commit` dan `git push pws main`.
+
+## Tugas 3
+
+### 1. Jelaskan mengapa kita menggunakan ModelForm pada Django alih-alih membuat form HTML secara manual. Selain itu, jelaskan pula mengapa kita diwajibkan menambahkan `{% csrf_token %}` pada form tersebut!
+
+* **Kenapa pakai `ModelForm` daripada form HTML manual?**
+  * **Otomatis & Hemat Waktu**: `ModelForm` bisa langsung membaca bidang (*fields*) dari model Django yang sudah kita buat (misal model `Project` dan `Experience`). Jadi kita tidak perlu repot mengetik tag `<input>` HTML satu per satu.
+  * **Sudah ada Validasi bawaan**: `ModelForm` otomatis menyesuaikan tipe input dengan atribut di model. Contohnya jika di model berupa `DateField` atau `URLField`, maka form akan otomatis memvalidasi format tanggal dan link tanpa perlu kita buat kodenya dari nol.
+  * **Mudah Dirawat (DRY)**: Kalau misal ada perubahan field di model, kita cukup ubah di satu tempat saja dan form-nya akan ikut menyesuaikan.
+  * **Simpan Data Lebih Mudah**: Tinggal panggil method `.save()`, data dari form bisa langsung tersimpan ke database.
+
+* **Kenapa wajib pakai `{% csrf_token %}`?**
+  * Tag `{% csrf_token %}` berfungsi untuk mengamankan form dari serangan **CSRF (Cross-Site Request Forgery)**.
+  * Token ini memicu Django untuk mengecek apakah request `POST` yang masuk benar-benar dikirim oleh user yang sah dari situs kita, bukan dari situs asing/peretas yang mencoba mengirim data jahat atas nama user kita.
+
+---
+
+### 2. Pada Tutorial 03, kita membahas format data JSON dan XML. Mengapa JSON lebih disukai dalam pengembangan aplikasi web modern dibandingkan XML?
+
+* **Ukurannya Lebih Ringan**: JSON menggunakan struktur kunci-nilai (*key-value*) yang lebih ringkas. XML memakai tag pembuka dan penutup (`<tag></tag>`) yang bikin ukuran datanya jadi lebih besar.
+* **Cepat Diproses JavaScript**: Karena JSON secara native merupakan format data bawaan JavaScript, proses membaca/parsing datanya di browser (frontend) jauh lebih cepat dibanding XML.
+* **Lebih Enak Dibaca**: Struktur data pada JSON lebih sederhana dan gampang dibaca oleh developer.
+* **Standar Web Modern**: Mayoritas API dan framework frontend zaman sekarang (seperti React atau Vue) sudah menjadikan JSON sebagai standar utama untuk bertukar data.
+
+---
+
+### 3. Jelaskan alur yang terjadi saat kamu menggunakan fungsi view untuk mengembalikan data portofoliomu dalam bentuk JSON. Mengapa kita perlu melakukan proses serialization pada model Django sebelum datanya dikembalikan?
+
+* **Alur Pengembalian Data JSON:**
+  1. User/browser mengakses URL endpoint (misalnya `/json/`).
+  2. Fungsi *view* di Django akan mengambil data dari database lewat ORM, contohnya `Experience.objects.all()`. Hasilnya berbentuk `QuerySet`.
+  3. Data `QuerySet` tersebut diubah dulu menjadi data sederhana (string, angka, list) menggunakan fungsi serialisator Django (`django.core.serializers`).
+  4. Data yang sudah diserialisasi dikembalikan ke browser sebagai respons HTTP berformat JSON.
+
+* **Kenapa Data Model Perlu Di-serialize Dulu?**
+  * Objek `QuerySet` bawaan Django adalah objek Python yang kompleks. Format JSON tidak paham cara membaca objek Python secara langsung.
+  * Proses *serialization* berfungsi menerjemahkan objek Python/Django tersebut menjadi teks atau tipe data dasar yang sesuai dengan standar penulisan JSON, sehingga bisa dipahami oleh sistem lain atau frontend.
+
+---
+
+## AI Disclosure
+
+* **Tool AI yang Digunakan**: Google Gemini.
+* **Penggunaan**:
+  * Membantu mencari penyebab error saat mengatasi `FieldError` di `forms.py` karena field `thumbnail`.
+  * Membantu memberikan pemahaman konsep teoritis seputar `ModelForm`, CSRF, dan Serialisasi data Django.
+* **Perbaikan & Analisis Manual**:
+  * Penyesuaian isi file `forms.py` dan `views.py` tetap dikerjakan dan diperiksa secara manual agar pas dengan struktur model proyek tanpa field `thumbnail`.
+  * Penataan tampilan template dan logika perbandingan tanggal di-test sendiri secara manual di browser.
