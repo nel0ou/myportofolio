@@ -11,6 +11,10 @@ from django.core.exceptions import PermissionDenied
 from main.models import Experience, Project
 from main.forms import ProjectForm, ExperienceForm
 
+# HELPER: buat cek apakah user termasuk dalam grup Editor
+def is_editor(user):
+    return user.is_authenticated and user.groups.filter(name='Editor').exists()
+
 # ==================== AUTHENTICATION VIEWS ====================
 
 def register(request):
@@ -68,11 +72,16 @@ def show_project(request):
     context = {
         "name": "Naila Salsabila",
         "project_list": project_list,
+        "is_editor": is_editor(request.user),
     }
     return render(request, "projects.html", context)
 
 @login_required(login_url="/login/")
 def create_project(request):
+    # Server-side check: Hanya Superuser yang boleh Create
+    if not request.user.is_superuser:
+        raise PermissionDenied
+
     form = ProjectForm(request.POST or None)
     if form.is_valid() and request.method == "POST":
         form.save()
@@ -83,6 +92,10 @@ def create_project(request):
 
 @login_required(login_url="/login/")
 def edit_project(request, id):
+    # Server-side check: Superuser ATAU Editor yang boleh Edit
+    if not (request.user.is_superuser or is_editor(request.user)):
+        raise PermissionDenied
+
     project = get_object_or_404(Project, pk=id)
     form = ProjectForm(request.POST or None, instance=project)
     if form.is_valid() and request.method == "POST":
@@ -94,6 +107,10 @@ def edit_project(request, id):
 
 @login_required(login_url="/login/")
 def delete_project(request, id):
+    # Server-side check: Hanya Superuser yang boleh Delete
+    if not request.user.is_superuser:
+        raise PermissionDenied
+
     project = get_object_or_404(Project, pk=id)
     if request.method == "POST":
         project.delete()
@@ -109,11 +126,16 @@ def show_experience(request):
     context = {
         "name": "Naila Salsabila",
         "experience_list": Experience.objects.all(),
+        "is_editor": is_editor(request.user),
     }
     return render(request, "experience.html", context)
 
 @login_required(login_url="/login/")
 def create_experience(request):
+    # Server-side check: Hanya Superuser yang boleh Create
+    if not request.user.is_superuser:
+        raise PermissionDenied
+
     form = ExperienceForm(request.POST or None)
     if form.is_valid() and request.method == "POST":
         form.save()
@@ -124,6 +146,10 @@ def create_experience(request):
 
 @login_required(login_url="/login/")
 def edit_experience(request, id):
+    # Server-side check: Superuser ATAU Editor yang boleh Edit
+    if not (request.user.is_superuser or is_editor(request.user)):
+        raise PermissionDenied
+
     experience = get_object_or_404(Experience, pk=id)
     form = ExperienceForm(request.POST or None, instance=experience)
     if form.is_valid() and request.method == "POST":
@@ -135,6 +161,10 @@ def edit_experience(request, id):
 
 @login_required(login_url="/login/")
 def delete_experience(request, id):
+    # Server-side check: Hanya Superuser yang boleh Delete
+    if not request.user.is_superuser:
+        raise PermissionDenied
+
     experience = get_object_or_404(Experience, pk=id)
     if request.method == "POST":
         experience.delete()

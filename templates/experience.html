@@ -6,7 +6,11 @@
 <section class="experience-section" id="experience">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
         <h2 class="section-title" style="margin-bottom: 0;">Experience</h2>
-        <a href="{% url 'main:create_experience' %}" class="social-link" style="text-decoration: none;">+ Tambah Experience</a>
+        
+        <!-- Hanya Superuser (Pemilik Portofolio) yang bisa melihat tombol Tambah -->
+        {% if user.is_superuser %}
+            <a href="{% url 'main:create_experience' %}" class="social-link" style="text-decoration: none;">+ Tambah Experience</a>
+        {% endif %}
     </div>
 
     <div class="timeline">
@@ -15,7 +19,6 @@
                 <div class="timeline-dot"></div>
                 <div class="timeline-content">
                     
-                    <!-- PERUBAHAN TAMPILAN RENTANG WAKTU -->
                     <span class="timeline-date">
                         {% if exp.started_at %}
                             {{ exp.started_at|date:"F Y" }}
@@ -35,16 +38,22 @@
                     <p>{{ exp.description }}</p>
 
                     <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
-                        <a href="{% url 'main:edit_experience' exp.id %}" style="background-color: #ffc107; color: black; padding: 0.3rem 0.6rem; border-radius: 4px; text-decoration: none; font-size: 0.8rem; font-weight: 600;">
-                            Edit
-                        </a>
+                        <!-- Tombol EDIT: Tampil jika Superuser ATAU Editor -->
+                        {% if user.is_superuser or is_editor %}
+                            <a href="{% url 'main:edit_experience' exp.id %}" style="background-color: #ffc107; color: black; padding: 0.3rem 0.6rem; border-radius: 4px; text-decoration: none; font-size: 0.8rem; font-weight: 600;">
+                                Edit
+                            </a>
+                        {% endif %}
                         
-                        <form method="POST" action="{% url 'main:delete_experience' exp.id %}">
-                            {% csrf_token %}
-                            <button type="submit" onclick="return confirm('Yakin ingin menghapus pengalaman ini?')" style="background-color: var(--accent, #dc3545); color: white; border: none; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600;">
-                                Hapus
-                            </button>
-                        </form>
+                        <!-- Tombol HAPUS: Tampil HANYA jika Superuser -->
+                        {% if user.is_superuser %}
+                            <form method="POST" action="{% url 'main:delete_experience' exp.id %}">
+                                {% csrf_token %}
+                                <button type="submit" onclick="return confirm('Yakin ingin menghapus pengalaman ini?')" style="background-color: var(--accent, #dc3545); color: white; border: none; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600;">
+                                    Hapus
+                                </button>
+                            </form>
+                        {% endif %}
                     </div>
                 </div>
             </article>
