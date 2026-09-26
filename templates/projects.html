@@ -23,10 +23,23 @@
                 </div>
             {% endif %}
 
-            <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+            <div style="margin-top: 1rem; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                <!-- BUTANG STAR / UNSTAR -->
+                <form method="POST" action="{% url 'main:toggle_star' project.id %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" style="border: 1px solid #ccc; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; background-color: {% if user in project.starred_by.all %}#ffc107{% else %}#f8f9fa{% endif %}; color: #000; font-weight: 600; font-size: 0.8rem;">
+                        {% if user in project.starred_by.all %}
+                            ★ Unstar ({{ project.starred_by.count }})
+                        {% else %}
+                            ☆ Star ({{ project.starred_by.count }})
+                        {% endif %}
+                    </button>
+                </form>
+
                 <a href="{% url 'main:edit_project' project.id %}" style="background-color: #ffc107; color: black; padding: 0.4rem 0.8rem; border-radius: 4px; text-decoration: none; font-size: 0.8rem; font-weight: 600;">
                     Edit
                 </a>
+                
                 <form method="POST" action="{% url 'main:delete_project' project.id %}">
                     {% csrf_token %}
                     <button type="submit" onclick="return confirm('Yakin ingin menghapus proyek ini?')" style="background-color: var(--accent, #dc3545); color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600;">

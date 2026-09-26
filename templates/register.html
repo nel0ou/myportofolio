@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="container" style="padding-top: 3rem; padding-bottom: 3rem;">
+    <h2>Buat Akun</h2>
+    <form method="POST" action="{% url 'main:register' %}" style="max-width: 500px;">
+        {% csrf_token %}
+        {% for field in form %}
+            <div style="margin-bottom: 1rem;">
+                <label style="font-weight: 600; display: block;">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}
+                    <p style="font-size: 0.8rem; color: #666;">{{ field.help_text }}</p>
+                {% endif %}
+                {% for error in field.errors %}
+                    <p style="color: red; font-size: 0.85rem;">{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endfor %}
+        <button type="submit" class="social-link" style="border: none; cursor: pointer;">Daftar</button>
+    </form>
+    <p style="margin-top: 1rem;">Sudah punya akun? <a href="{% url 'main:login' %}">Login di sini</a>.</p>
+</main>
+{% endblock %}
