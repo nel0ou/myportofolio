@@ -149,3 +149,44 @@ Data Delivery (seperti format JSON atau XML) dibutuhkan sebagai media pertukaran
 * **Perbaikan & Analisis Manual**:
   * Penyesuaian isi file `forms.py` dan `views.py` tetap dikerjakan dan diperiksa secara manual agar pas dengan struktur model proyek tanpa field `thumbnail`.
   * Penataan tampilan template dan logika perbandingan tanggal di-test sendiri secara manual di browser.
+
+# Tugas 4 PBP
+### Implementasi Peran & Hak Akses
+Aplikasi portofolio ini menerapkan sistem pengontrolan akses pengguna berdasarkan 4 tingkatan peran (*roles*) utama untuk menjaga keamanan server-side dan kenyamanan tampilan UI:
+
+1. **Pengunjung (Guest / Tanpa Login)**
+   * **Akses**: *Read-only*. Pengunjung hanya dapat melihat daftar proyek (*Projects*) dan riwayat pengalaman (*Experience*).
+   * **Proteksi**: Tombol aksi (*Create, Edit, Delete*) disembunyikan. Jika pengunjung mencoba mengakses URL aksi secara manual, server akan secara otomatis melakukan *redirect* ke halaman Login.
+
+2. **Pengguna Biasa (Registered User)**
+   * **Akses**: *Read* + *Interactive Star*.
+   * **Fitur**: Dapat memberikan atau membatalkan *Star* pada proyek portofolio. Setiap pengguna dibatasi maksimal 1 *star* per proyek.
+   * **Proteksi**: Tidak memiliki akses ke fitur penambahan, pengubahan, atau penghapusan data. Jika mengakses URL terkait, server akan melempar *exception* `PermissionDenied` (**HTTP 403 Forbidden**).
+
+3. **Editor (Django Group `Editor`)**
+   * **Akses**: Hak Pengguna Biasa + *Update*.
+   * **Fitur**: Pengguna yang dimasukkan ke dalam Django Group `Editor` (dikonfigurasi via Django Admin) dapat mengedit data proyek dan pengalaman yang sudah ada.
+   * **Proteksi**: Diberikan akses ke tombol *Edit*, namun dibatasi dari aksi pembuatan data baru (*Create*) dan penghapusan (*Delete*) dengan balasan **HTTP 403 Forbidden**.
+
+4. **Pemilik Portofolio (Superuser)**
+   * **Akses**: *Full CRUD* (*Create, Read, Update, Delete*) + *Star*.
+   * **Fitur**: Memiliki kontrol penuh atas seluruh manajemen data proyek dan pengalaman di portofolio.
+
+---
+
+## Proteksi Keamanan Server-Side & UI Access Control
+
+- **Server-Side Check**: Setiap *view* yang melakukan modifikasi data dilindungi menggunakan *decorator* `@login_required` serta pengondisian hak akses menggunakan *helper function* `is_editor()` dan atribut `request.user.is_superuser`. Aksi yang tidak sesuai izin akan langsung memicu `raise PermissionDenied` yang menghasilkan respons **403 Forbidden**.
+- **Template UI Control**: Elemen tombol pada templat `projects.html` dan `experience.html` dibungkus dengan logika *template tag* Django (seperti `{% if user.is_superuser or is_editor %}`) sehingga tombol hanya dirender untuk pengguna yang memiliki hak akses.
+
+---
+
+## AI Disclosure & Transparansi Kolaborasi AI
+
+- **Tools AI yang Digunakan**: Gemini AI.
+- **Strategi Prompting**:
+  1. *Context Feeding*: Mengunggah instruksi dokumen Tugas 4 dan struktur kode proyek (`views.py`, `models.py`, `urls.py`, templat HTML) untuk memperoleh panduan yang tepat sasaran.
+  2. *Step-by-step Guidance*: Mengajukan pertanyaan bertahap mulai dari perancangan relasi `ManyToManyField`, pembuatan fungsi *helper* otorisasi, penanganan `PermissionDenied` (HTTP 403), hingga penyesuaian kondisional templat.
+- **Hasil Kolaborasi & Perbaikan Manual**:
+  - **Dukungan AI**: AI memberikan draf awal logika *toggle star* dan pengondisian hak akses di *views* serta arahan pembuatan grup `Editor`.
+  - **Analisis Kritis & Perbaikan Manual**: Terdapat penyesuaian manual pada templat `experience.html` agar tombol *Edit* dan *Hapus* tetap menyatu rapi dengan struktur visual *timeline* bawaan portofolio tanpa merusak tata letak CSS. Selain itu, penanganan pemisahan database lokal (SQLite) dan database PWS disesuaikan secara manual melalui pembuatan superuser via SSH/Terminal PWS.
