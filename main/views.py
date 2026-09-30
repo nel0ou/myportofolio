@@ -1,11 +1,12 @@
 import datetime
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.core import serializers
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 from django.core.exceptions import PermissionDenied
 
 from main.models import Experience, Project
@@ -68,17 +69,60 @@ def show_main(request):
 # ==================== PROJECT VIEWS ====================
 
 def show_project(request):
-    project_list = Project.objects.all()
+    title_query = request.GET.get("title", "").strip()
     context = {
         "name": "Naila Salsabila",
-        "project_list": project_list,
+        "title_query": title_query,
         "is_editor": is_editor(request.user),
+        "form": ProjectForm(),  # Digunakan oleh Modal Tambah Proyek via AJAX
     }
     return render(request, "projects.html", context)
 
+def get_projects_json(request):
+    title_query = request.GET.get("title", "").strip()
+    projects = Project.objects.prefetch_related('starred_by').all()
+    if title_query:
+        projects = projects.filter(title__icontains=title_query)
+    
+    data = []
+    for project in projects:
+        starred_users = project.starred_by.all()
+        is_starred = request.user in starred_users if request.user.is_authenticated else False
+        starred_by_names = ", ".join([u.username for u in starred_users])
+        data.append({
+            "pk": str(project.id),
+            "fields": {
+                "title": project.title,
+                "description": project.description,
+                "tech_stack": project.tech_stack,
+                "link_url": getattr(project, 'link_url', ''),
+                "star_count": starred_users.count(),
+                "is_starred": is_starred,
+                "starred_by_names": starred_by_names,
+            }
+        })
+    return JsonResponse(data, safe=False)
+
+@require_POST
+def create_project_ajax(request):
+    if not request.user.is_superuser:
+        return JsonResponse(
+            {"message": "Hanya pemilik portofolio yang dapat menambahkan proyek."},
+            status=403,
+        )
+    
+    form = ProjectForm(request.POST)
+    if form.is_valid():
+        project = form.save()
+        return JsonResponse(
+            {"message": "Proyek berhasil ditambahkan.", "pk": str(project.id)},
+            status=201,
+        )
+    
+    return JsonResponse({"errors": form.errors.get_json_data()}, status=400)
+
 @login_required(login_url="/login/")
 def create_project(request):
-    # Server-side check: Hanya Superuser yang boleh Create
     if not request.user.is_superuser:
         raise PermissionDenied
 
@@ -92,7 +136,6 @@ def create_project(request):
 
 @login_required(login_url="/login/")
 def edit_project(request, id):
-    # Server-side check: Superuser ATAU Editor yang boleh Edit
     if not (request.user.is_superuser or is_editor(request.user)):
         raise PermissionDenied
 
@@ -107,7 +150,6 @@ def edit_project(request, id):
 
 @login_required(login_url="/login/")
 def delete_project(request, id):
-    # Server-side check: Hanya Superuser yang boleh Delete
     if not request.user.is_superuser:
         raise PermissionDenied
 
@@ -132,7 +174,6 @@ def show_experience(request):
 
 @login_required(login_url="/login/")
 def create_experience(request):
-    # Server-side check: Hanya Superuser yang boleh Create
     if not request.user.is_superuser:
         raise PermissionDenied
 
@@ -146,7 +187,6 @@ def create_experience(request):
 
 @login_required(login_url="/login/")
 def edit_experience(request, id):
-    # Server-side check: Superuser ATAU Editor yang boleh Edit
     if not (request.user.is_superuser or is_editor(request.user)):
         raise PermissionDenied
 
@@ -161,7 +201,6 @@ def edit_experience(request, id):
 
 @login_required(login_url="/login/")
 def delete_experience(request, id):
-    # Server-side check: Hanya Superuser yang boleh Delete
     if not request.user.is_superuser:
         raise PermissionDenied
 

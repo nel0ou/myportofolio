@@ -11,10 +11,12 @@ from main.views import (
     edit_project,
     delete_project,
     show_json,
+    get_projects_json,      
+    create_project_ajax,    
     register,
     login_user,
     logout_user,
-    toggle_star,  # Added toggle_star import
+    toggle_star,
 )
 
 app_name = "main"
@@ -25,10 +27,12 @@ urlpatterns = [
     
     # Project URLs
     path("projects/", show_project, name="show_project"),
+    path("projects/json/", get_projects_json, name="get_projects_json"),     # Endpoint AJAX Get Data
+    path("projects/add-ajax/", create_project_ajax, name="create_project_ajax"), # Endpoint AJAX Add Data
     path("projects/create/", create_project, name="create_project"),
     path("projects/<uuid:id>/edit/", edit_project, name="edit_project"),
     path("projects/<uuid:id>/delete/", delete_project, name="delete_project"),
-    path("projects/<uuid:id>/star/", toggle_star, name="toggle_star"),  # Route for Star feature
+    path("projects/<uuid:id>/star/", toggle_star, name="toggle_star"),
     path("json/", show_json, name="show_json"),
     
     # Experience URLs
