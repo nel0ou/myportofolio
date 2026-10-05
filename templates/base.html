@@ -40,6 +40,8 @@
         </div>
     </footer>
 
+    <!-- Impor utils.js secara global agar getCookie & escapeHtml dapat digunakan di semua halaman -->
+    <script src="{% static 'js/utils.js' %}"></script>
     {% include 'components/toast.html' %}
 </body>
 </html>

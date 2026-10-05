@@ -6,6 +6,7 @@ from main.views import (
     edit_experience,
     delete_experience,
     show_experience_json,
+    create_experience_ajax,  
     show_project,
     create_project,
     edit_project,
@@ -37,10 +38,11 @@ urlpatterns = [
     
     # Experience URLs
     path("experience/", show_experience, name="show_experience"),
+    path("experience/json/", show_experience_json, name="show_experience_json"), # Endpoint AJAX Get Data
+    path("experience/add-ajax/", create_experience_ajax, name="create_experience_ajax"), # Endpoint AJAX Add Data
     path("experience/create/", create_experience, name="create_experience"),
     path("experience/<uuid:id>/edit/", edit_experience, name="edit_experience"),
     path("experience/<uuid:id>/delete/", delete_experience, name="delete_experience"),
-    path("experience/json/", show_experience_json, name="show_experience_json"),
 
     # Authentication URLs
     path("register/", register, name="register"),

@@ -38,3 +38,15 @@ class ExperienceForm(forms.ModelForm):
             "started_at": forms.DateInput(attrs={"type": "date", "style": "width: 100%; padding: 0.5rem; margin-top: 0.25rem;"}),
             "ended_at": forms.DateInput(attrs={"type": "date", "style": "width: 100%; padding: 0.5rem; margin-top: 0.25rem;"}),
         }
+
+    def clean_title(self):
+        title = strip_tags(self.cleaned_data["title"]).strip()
+        if not title:
+            raise ValidationError("Judul pengalaman tidak boleh hanya berisi tag HTML.")
+        return title
+
+    def clean_description(self):
+        return strip_tags(self.cleaned_data["description"]).strip()
+
+    def clean_category(self):
+        return strip_tags(self.cleaned_data["category"]).strip()

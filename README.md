@@ -190,3 +190,38 @@ Aplikasi portofolio ini menerapkan sistem pengontrolan akses pengguna berdasarka
 - **Hasil Kolaborasi & Perbaikan Manual**:
   - **Dukungan AI**: AI memberikan draf awal logika *toggle star* dan pengondisian hak akses di *views* serta arahan pembuatan grup `Editor`.
   - **Analisis Kritis & Perbaikan Manual**: Terdapat penyesuaian manual pada templat `experience.html` agar tombol *Edit* dan *Hapus* tetap menyatu rapi dengan struktur visual *timeline* bawaan portofolio tanpa merusak tata letak CSS. Selain itu, penanganan pemisahan database lokal (SQLite) dan database PWS disesuaikan secara manual melalui pembuatan superuser via SSH/Terminal PWS.
+
+### Tugas 5
+1. **Debouncing adalah teknik untuk menunda eksekusi sebuah fungsi sampai pengguna berhenti melakukan suatu aktivitas selama waktu tertentu. Mengapa teknik ini penting diterapkan pada fitur pencarian yang menggunakan AJAX?**
+   * *Urgensi:* Tanpa *debouncing*, setiap kali pengguna mengetik satu karakter di kolom pencarian (misalnya kata `"Experience"`), browser akan langsung mengirimkan *request* HTTP ke server sebanyak 10 kali terpisah. Hal ini menyebabkan penumpukan pemanggilan API, memperlambat performa server, dan memboroskan konsumsi *bandwidth*. 
+   * *Cara Kerja:* Dengan *debouncing* berdurasi 300 milidetik, *timer* akan di-reset di setiap ketikan baru, dan *request* AJAX baru akan benar-benar dikirimkan ke server hanya setelah pengguna berhenti mengetik selama waktu yang ditentukan.
+
+2. **Jelaskan fungsi dari penggunaan await ketika kita menggunakan fetch()! Apa yang akan terjadi jika kita tidak menggunakan await?**
+   * *Fungsi `await`:* `fetch()` bersifat *asynchronous* dan mengembalikan sebuah `Promise`. Penggunaan kata kunci `await` memerintahkan JavaScript untuk menghentikan sementara baris eksekusi fungsi lokal tersebut sampai `Promise` terselesaikan (*resolved*) dan mengembalikan objek `Response` atau data JSON aktual.
+   * *Konsekuensi Tanpa `await`:* Jika `await` tidak digunakan, variabel hasil dari `fetch()` masih berstatus *Unresolved Promise*, bukan objek respons data sesungguhnya. Ketika program mencoba mengakses properti dari variabel tersebut sebelum data siap, JavaScript akan melempar *runtime error* atau mengolah data kosong (*undefined*).
+
+3. **Jelaskan apa itu serangan XSS (Cross-Site Scripting) dan mengapa data yang ditampilkan melalui AJAX/JavaScript lebih rentan terhadap serangan ini daripada data yang ditampilkan langsung melalui template Django!**
+   * *Pengertian XSS:* Serangan keamanan di mana peretas menyisipkan skrip jahat (HTML/JavaScript aktif) ke dalam aplikasi web yang kemudian dieksekusi oleh browser milik pengguna lain.
+   * *Kerentanan pada AJAX/JavaScript:* Saat merender halaman via AJAX, data dari server disisipkan langsung ke dalam DOM menggunakan properti JavaScript seperti `element.innerHTML`. Jika data masukan pengguna mengandung tag skrip jahat (misal `<img src="x" onerror="alert('XSS')">`) dan tidak disanitasi secara manual, browser akan langsung mengeksekusi skrip tersebut.
+   * *Perbandingan dengan Template Django:* Pada template Django, variabel DTL (`{{ data }}`) secara otomatis menerapkan *HTML Escaping* tingkat server sebelum dirender ke HTML, sehingga karakter khusus seperti `<` atau `>` dikonversi menjadi bentuk yang aman. Pada AJAX frontend, perlindungan otomatis ini hilang, sehingga pengembang wajib menerapkan sanitasi manual menggunakan fungsi seperti `escapeHtml()` pada JavaScript atau `strip_tags` pada server.
+
+---
+
+### AI Disclosure & Transparansi Kolaborasi AI (Tugas 5)
+
+* **Tools AI yang Digunakan:** ChatGPT & Google Gemini.
+* **Strategi Prompting:**
+  1. *Context Feeding:* Memberikan konteks berupa instruksi Tugas 5, struktur README, kode Django, templat HTML, dan skrip JavaScript.
+  2. *Step-by-step Guidance:* Meminta penjelasan bertahap mengenai AJAX, Fetch API, `async/await`, *debouncing*, CSRF, dan XSS.
+  3. *Debugging Berbasis Error:* Mengirimkan gejala *error* saat implementasi untuk mencari akar permasalahan.
+  4. *Code Review:* Meminta AI meninjau validitas kode AJAX, *debounce*, CSRF, dan fungsi *escaping*.
+
+* **Bagian Spesifik yang Dibantu AI:**
+  * Menjelaskan konsep dasar AJAX menggunakan Fetch API dan penggunaan `async/await`.
+  * Memberikan draf implementasi teknik *debouncing* pada fitur pencarian judul pengalaman.
+  * Membantu merancang fungsi helper `escapeHtml()` untuk sanitasi string di sisi client (`utils.js`).
+* **Keterbatasan AI & Analisis Kritis Mandiri (Perbaikan Manual):**
+  * *Keterbatasan:* Solusi yang diberikan AI terkadang menggunakan asumsi generik yang tidak sesuai dengan struktur lokal atau konfigurasi server proyek yang sesungguhnya.
+  * *Perbaikan Manual:* 
+    1. **Debugging Static Files:** Masalah pemuatan berkas `utils.js` yang menghasilkan error `404 Not Found` tidak cukup diselesaikan dengan saran umum AI. Saya memeriksa ulang struktur direktori proyek secara mandiri, memindahkan berkas ke folder `main/static/js/`, dan memastikan pemanggilan tag `{% static 'js/utils.js' %}` terpasang dengan benar di `base.html`.
+    2. **Penanganan Error Runtime Date/Time (Backend):** AI sempat menyarankan pemanggilan `.strftime()` secara langsung yang memicu *crash* `500 Internal Server Error` saat tanggal bernilai kosong. Saya melakukan perbaikan manual di `views.py` dengan menambahkan pengecekan kondisional eksplisit menggunakan `getattr()` untuk mengamankan nilai tanggal yang bernilai `None`.

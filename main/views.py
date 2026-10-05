@@ -165,12 +165,63 @@ def show_json(request):
 # ==================== EXPERIENCE VIEWS ====================
 
 def show_experience(request):
+    title_query = request.GET.get("title", "").strip()
     context = {
         "name": "Naila Salsabila",
-        "experience_list": Experience.objects.all(),
+        "title_query": title_query,
         "is_editor": is_editor(request.user),
+        "form": ExperienceForm(),  # Digunakan oleh Modal Tambah Experience via AJAX
     }
     return render(request, "experience.html", context)
+
+def show_experience_json(request):
+    title_query = request.GET.get("title", "").strip()
+    experiences = Experience.objects.all()
+    
+    if title_query:
+        experiences = experiences.filter(title__icontains=title_query)
+
+    data = []
+    for exp in experiences:
+        # Pengecekan aman untuk mengantisipasi nilai None
+        start_str = exp.started_at.strftime('%Y-%m-%d') if getattr(exp, 'started_at', None) else ""
+        end_str = exp.ended_at.strftime('%Y-%m-%d') if getattr(exp, 'ended_at', None) else ""
+
+        category_val = ""
+        if hasattr(exp, 'get_category_display'):
+            category_val = exp.get_category_display()
+        elif exp.category:
+            category_val = str(exp.category)
+
+        data.append({
+            "pk": str(exp.id),
+            "fields": {
+                "title": exp.title,
+                "description": exp.description,
+                "category": category_val,
+                "started_at": start_str,
+                "ended_at": end_str,
+            }
+        })
+    return JsonResponse(data, safe=False)
+
+@require_POST
+def create_experience_ajax(request):
+    if not request.user.is_superuser:
+        return JsonResponse(
+            {"message": "Hanya pemilik portofolio yang dapat menambahkan pengalaman."},
+            status=403,
+        )
+    
+    form = ExperienceForm(request.POST)
+    if form.is_valid():
+        experience = form.save()
+        return JsonResponse(
+            {"message": "Pengalaman berhasil ditambahkan.", "pk": str(experience.id)},
+            status=201,
+        )
+    
+    return JsonResponse({"errors": form.errors.get_json_data()}, status=400)
 
 @login_required(login_url="/login/")
 def create_experience(request):
@@ -208,10 +259,6 @@ def delete_experience(request, id):
     if request.method == "POST":
         experience.delete()
     return redirect("main:show_experience")
-
-def show_experience_json(request):
-    data = Experience.objects.all()
-    return HttpResponse(serializers.serialize("json", data), content_type="application/json")
 
 # ==================== STAR FEATURE VIEW ====================
 

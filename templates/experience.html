@@ -7,59 +7,182 @@
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
         <h2 class="section-title" style="margin-bottom: 0;">Experience</h2>
         
-        <!-- Hanya Superuser (Pemilik Portofolio) yang bisa melihat tombol Tambah -->
+        <!-- Hanya Superuser (Pemilik Portofolio) yang melihat tombol Tambah -->
         {% if user.is_superuser %}
-            <a href="{% url 'main:create_experience' %}" class="social-link" style="text-decoration: none;">+ Tambah Experience</a>
+            <button type="button" class="button" popovertarget="add-experience-modal">+ Tambah Experience</button>
         {% endif %}
     </div>
 
-    <div class="timeline">
-        {% for exp in experience_list %}
-            <article class="timeline-item">
-                <div class="timeline-dot"></div>
-                <div class="timeline-content">
-                    
-                    <span class="timeline-date">
-                        {% if exp.started_at %}
-                            {{ exp.started_at|date:"F Y" }}
-                        {% endif %}
+    <!-- Live Search Form -->
+    <form id="experience-search-form" style="margin-bottom: 2rem; display: flex; gap: 0.5rem;">
+        <input type="search" id="search-input" value="{{ title_query }}" placeholder="Cari berdasarkan judul pengalaman..." style="padding: 0.6rem; flex: 1; border: 1px solid var(--line); border-radius: var(--radius);">
+        <button type="submit" class="button">Cari</button>
+    </form>
 
-                        {% if exp.is_ongoing %}
-                            - Sekarang
-                        {% elif exp.ended_at %}
-                            - {{ exp.ended_at|date:"F Y" }}
-                        {% endif %}
-                    </span>
-                    
-                    <h3>{{ exp.title }}</h3>
-                    {% if exp.category %}
-                        <p class="timeline-org">{{ exp.category }}</p>
-                    {% endif %}
-                    <p>{{ exp.description }}</p>
+    <!-- State Indicators -->
+    <div id="loading" class="hide"><p>Memuat pengalaman...</p></div>
+    <div id="error" class="hide"><p>Gagal memuat data pengalaman. Silakan coba lagi.</p></div>
+    <div id="empty" class="hide"><p>Belum ada pengalaman yang ditampilkan.</p></div>
 
-                    <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
-                        <!-- Tombol EDIT: Tampil jika Superuser ATAU Editor -->
-                        {% if user.is_superuser or is_editor %}
-                            <a href="{% url 'main:edit_experience' exp.id %}" style="background-color: #ffc107; color: black; padding: 0.3rem 0.6rem; border-radius: 4px; text-decoration: none; font-size: 0.8rem; font-weight: 600;">
-                                Edit
-                            </a>
-                        {% endif %}
-                        
-                        <!-- Tombol HAPUS: Tampil HANYA jika Superuser -->
-                        {% if user.is_superuser %}
-                            <form method="POST" action="{% url 'main:delete_experience' exp.id %}">
-                                {% csrf_token %}
-                                <button type="submit" onclick="return confirm('Yakin ingin menghapus pengalaman ini?')" style="background-color: var(--accent, #dc3545); color: white; border: none; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600;">
-                                    Hapus
-                                </button>
-                            </form>
-                        {% endif %}
-                    </div>
-                </div>
-            </article>
-        {% empty %}
-            <p>Belum ada pengalaman yang ditampilkan.</p>
-        {% endfor %}
-    </div>
+    <!-- Dynamic Timeline Container -->
+    <div id="timeline-container" class="timeline hide"></div>
 </section>
+
+{% if user.is_superuser %}
+    {% include "components/experience_form_modal.html" %}
+{% endif %}
+
+<script>
+    const BASE_EXPERIENCE_ENDPOINT = "{% url 'main:show_experience_json' %}";
+    const CREATE_EXPERIENCE_ENDPOINT = "{% url 'main:create_experience_ajax' %}";
+    const IS_SUPERUSER = "{{ user.is_superuser|yesno:'true,false' }}" === "true";
+    const IS_EDITOR = "{{ is_editor|yesno:'true,false' }}" === "true";
+
+    const SEARCH_DEBOUNCE_DELAY = 300;
+    let searchDebounceTimer;
+    let expAbortController;
+
+    const loadingState = document.getElementById('loading');
+    const errorState = document.getElementById('error');
+    const emptyState = document.getElementById('empty');
+    const timelineContainer = document.getElementById('timeline-container');
+    const searchForm = document.getElementById('experience-search-form');
+    const searchInput = document.getElementById('search-input');
+    const experienceForm = document.getElementById('experience-form');
+
+    function displayPageSection({ showLoading = false, showError = false, showEmpty = false, showTimeline = false }) {
+        loadingState.classList.toggle('hide', !showLoading);
+        errorState.classList.toggle('hide', !showError);
+        emptyState.classList.toggle('hide', !showEmpty);
+        timelineContainer.classList.toggle('hide', !showTimeline);
+    }
+
+    function closeExperienceModal() {
+        const modal = document.getElementById("add-experience-modal");
+        if (modal) modal.hidePopover();
+    }
+
+    function buildExperienceCardElement(item) {
+        const exp = item.fields;
+        const expId = item.pk;
+        const articleElement = document.createElement('article');
+        articleElement.className = 'timeline-item';
+
+        const deleteUrl = "{% url 'main:delete_experience' '00000000-0000-0000-0000-000000000000' %}".replace('00000000-0000-0000-0000-000000000000', expId);
+        const editUrl = "{% url 'main:edit_experience' '00000000-0000-0000-0000-000000000000' %}".replace('00000000-0000-0000-0000-000000000000', expId);
+
+        // Format tanggal
+        let dateText = "";
+        if (exp.started_at) {
+            dateText += escapeHtml(exp.started_at);
+        }
+        if (exp.ended_at) {
+            dateText += " - " + escapeHtml(exp.ended_at);
+        }
+
+        const categoryHtml = exp.category 
+            ? `<p class="timeline-org">${escapeHtml(exp.category)}</p>` 
+            : '';
+
+        const editHtml = (IS_SUPERUSER || IS_EDITOR)
+            ? `<a href="${editUrl}" style="background-color: #ffc107; color: black; padding: 0.3rem 0.6rem; border-radius: 4px; text-decoration: none; font-size: 0.8rem; font-weight: 600;">Edit</a>`
+            : '';
+
+        const deleteHtml = IS_SUPERUSER
+            ? `<form method="POST" action="${deleteUrl}" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" onclick="return confirm('Yakin ingin menghapus pengalaman ini?')" style="background-color: var(--accent, #dc3545); color: white; border: none; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600;">
+                    Hapus
+                </button>
+               </form>`
+            : '';
+
+        articleElement.innerHTML = `
+            <div class="timeline-dot"></div>
+            <div class="timeline-content">
+                <span class="timeline-date">${dateText}</span>
+                <h3>${escapeHtml(exp.title)}</h3>
+                ${categoryHtml}
+                <p>${escapeHtml(exp.description)}</p>
+                <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                    ${editHtml}
+                    ${deleteHtml}
+                </div>
+            </div>
+        `;
+        return articleElement;
+    }
+
+    async function fetchExperiences(searchQuery = "") {
+        if (expAbortController) expAbortController.abort();
+        expAbortController = new AbortController();
+
+        try {
+            displayPageSection({ showLoading: true });
+            const url = searchQuery ? `${BASE_EXPERIENCE_ENDPOINT}?title=${encodeURIComponent(searchQuery)}` : BASE_EXPERIENCE_ENDPOINT;
+            const response = await fetch(url, { headers: { 'Accept': 'application/json' }, signal: expAbortController.signal });
+            
+            if (!response.ok) throw new Error('Failed to fetch');
+
+            const data = await response.json();
+            if (data.length === 0) {
+                displayPageSection({ showEmpty: true });
+            } else {
+                timelineContainer.innerHTML = '';
+                data.forEach(item => timelineContainer.appendChild(buildExperienceCardElement(item)));
+                displayPageSection({ showTimeline: true });
+            }
+        } catch (error) {
+            if (error.name === 'AbortError') return;
+            displayPageSection({ showError: true });
+        }
+    }
+
+    async function addExperience(event) {
+        event.preventDefault();
+        const submitButton = experienceForm.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+
+        try {
+            const response = await fetch(CREATE_EXPERIENCE_ENDPOINT, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                body: new FormData(experienceForm),
+            });
+
+            const result = await response.json().catch(() => ({}));
+
+            if (response.ok) {
+                experienceForm.reset();
+                closeExperienceModal();
+                showToast('Berhasil', 'Pengalaman baru berhasil ditambahkan!', 'success');
+                fetchExperiences(searchInput.value.trim());
+            } else {
+                const errorMessages = result.errors
+                    ? Object.values(result.errors).flat().map(error => error.message)
+                    : [result.message || 'Terjadi kesalahan.'];
+                showToast('Gagal menambahkan pengalaman', errorMessages.join(' '), 'error');
+            }
+        } catch (error) {
+            showToast('Gagal', 'Tidak dapat terhubung ke server.', 'error');
+        } finally {
+            submitButton.disabled = false;
+        }
+    }
+
+    if (experienceForm) experienceForm.addEventListener('submit', addExperience);
+
+    searchInput.addEventListener("input", function() {
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(() => fetchExperiences(searchInput.value.trim()), SEARCH_DEBOUNCE_DELAY);
+    });
+
+    searchForm.addEventListener("submit", function(event) {
+        event.preventDefault();
+        clearTimeout(searchDebounceTimer);
+        fetchExperiences(searchInput.value.trim());
+    });
+
+    fetchExperiences(searchInput.value.trim());
+</script>
 {% endblock %}
