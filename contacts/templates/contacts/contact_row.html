@@ -1,0 +1,23 @@
+<tr id="contact-{{ contact.id }}">
+    <td>{{ contact.name }}</td>
+    <td>{{ contact.email }}</td>
+    <td>{{ contact.phone }}</td>
+
+    <td>
+        <button
+            hx-get="{% url 'contacts:contact_edit' contact.id %}"
+            hx-target="#contact-{{ contact.id }}"
+            hx-swap="outerHTML">
+            Edit
+        </button>
+
+        <button
+            hx-delete="{% url 'contacts:delete_contact' contact.id %}"
+            hx-target="#contact-{{ contact.id }}"
+            hx-swap="outerHTML"
+            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+            hx-confirm="Yakin ingin menghapus kontak ini?">
+            Hapus
+        </button>
+    </td>
+</tr>

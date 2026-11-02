@@ -1,3 +1,4 @@
+
 from django.urls import path
 from main.views import (
     show_main,
@@ -6,46 +7,78 @@ from main.views import (
     edit_experience,
     delete_experience,
     show_experience_json,
-    create_experience_ajax,  
+    create_experience_ajax,
     show_project,
     create_project,
     edit_project,
     delete_project,
     show_json,
-    get_projects_json,      
-    create_project_ajax,    
+    get_projects_json,
+    create_project_ajax,
     register,
     login_user,
     logout_user,
     toggle_star,
+
+    # DRF API Views
+    ExperienceListCreateAPIView,
+    ExperienceDetailAPIView,
+    ProjectListCreateAPIView,
+    ProjectDetailAPIView,
 )
 
 app_name = "main"
 
 urlpatterns = [
-    # Main / Profile Page
+    # ==================== MAIN / PROFILE PAGE ====================
     path("", show_main, name="show_main"),
-    
-    # Project URLs
+
+    # ==================== PROJECT URLs ====================
     path("projects/", show_project, name="show_project"),
-    path("projects/json/", get_projects_json, name="get_projects_json"),     # Endpoint AJAX Get Data
-    path("projects/add-ajax/", create_project_ajax, name="create_project_ajax"), # Endpoint AJAX Add Data
+    path("projects/json/", get_projects_json, name="get_projects_json"),
+    path("projects/add-ajax/", create_project_ajax, name="create_project_ajax"),
     path("projects/create/", create_project, name="create_project"),
     path("projects/<uuid:id>/edit/", edit_project, name="edit_project"),
     path("projects/<uuid:id>/delete/", delete_project, name="delete_project"),
     path("projects/<uuid:id>/star/", toggle_star, name="toggle_star"),
     path("json/", show_json, name="show_json"),
-    
-    # Experience URLs
+
+    # ==================== EXPERIENCE URLs ====================
     path("experience/", show_experience, name="show_experience"),
-    path("experience/json/", show_experience_json, name="show_experience_json"), # Endpoint AJAX Get Data
-    path("experience/add-ajax/", create_experience_ajax, name="create_experience_ajax"), # Endpoint AJAX Add Data
+    path("experience/json/", show_experience_json, name="show_experience_json"),
+    path("experience/add-ajax/", create_experience_ajax, name="create_experience_ajax"),
     path("experience/create/", create_experience, name="create_experience"),
     path("experience/<uuid:id>/edit/", edit_experience, name="edit_experience"),
     path("experience/<uuid:id>/delete/", delete_experience, name="delete_experience"),
 
-    # Authentication URLs
+    # ==================== AUTHENTICATION URLs ====================
     path("register/", register, name="register"),
     path("login/", login_user, name="login"),
     path("logout/", logout_user, name="logout"),
+
+    # ==================== REST API URLs (DRF) ====================
+
+    # Experience API
+    path(
+        "api/experiences/",
+        ExperienceListCreateAPIView.as_view(),
+        name="api_experience_list",
+    ),
+    path(
+        "api/experiences/<uuid:pk>/",
+        ExperienceDetailAPIView.as_view(),
+        name="api_experience_detail",
+    ),
+
+    # Project API
+    path(
+        "api/projects/",
+        ProjectListCreateAPIView.as_view(),
+        name="api_project_list",
+    ),
+    path(
+        "api/projects/<uuid:pk>/",
+        ProjectDetailAPIView.as_view(),
+        name="api_project_detail",
+    ),
 ]

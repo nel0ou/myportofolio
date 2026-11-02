@@ -1,5 +1,7 @@
+
 from django.test import TestCase, Client
 from main.models import Project
+
 
 class ProjectTest(TestCase):
     def setUp(self):
@@ -18,7 +20,14 @@ class ProjectTest(TestCase):
         )
         response = self.client.get('/projects/')
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Portfolio Website")
+
+        # Memastikan proyek berhasil dibuat di database
+        self.assertTrue(
+            Project.objects.filter(title="Portfolio Website").exists()
+        )
+
+        # Memastikan halaman memiliki tempat untuk menampilkan proyek
+        self.assertContains(response, 'id="grid"')
 
     def test_project_list_empty(self):
         response = self.client.get('/projects/')

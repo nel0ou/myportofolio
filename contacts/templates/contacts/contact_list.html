@@ -1,0 +1,68 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Manager</title>
+
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+</head>
+<body>
+    <h1>Contact Manager</h1>
+
+    <h2>Daftar Kontak</h2>
+
+    <!-- Pencarian Kontak -->
+    <input
+        type="text"
+        name="q"
+        placeholder="Cari kontak berdasarkan nama..."
+        hx-get="{% url 'contacts:contact_search' %}"
+        hx-trigger="keyup changed delay:300ms"
+        hx-target="#contact-table"
+        hx-swap="innerHTML"
+    >
+
+    <h2>Tambah Kontak</h2>
+
+    <!-- Form Tambah Kontak -->
+    <form
+        method="POST"
+        action="{% url 'contacts:add_contact' %}"
+        hx-post="{% url 'contacts:add_contact' %}"
+        hx-target="#contact-table"
+        hx-swap="beforeend"
+        hx-on::before-request="document.getElementById('empty-message')?.remove()"
+        hx-on::after-request="if(event.detail.successful) this.reset()"
+    >
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        <button type="submit">Tambah Kontak</button>
+    </form>
+
+    <!-- Tabel Kontak -->
+    <table border="1" cellpadding="10">
+        <thead>
+            <tr>
+                <th>Nama</th>
+                <th>Email</th>
+                <th>Nomor Telepon</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+
+        <tbody id="contact-table">
+            {% for contact in contacts %}
+                {% include 'contacts/contact_row.html' %}
+            {% empty %}
+                <tr id="empty-message">
+                    <td colspan="4">Belum ada kontak.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+</html>
