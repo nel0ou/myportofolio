@@ -1,13 +1,18 @@
 
 from django.urls import path
 from main.views import (
+    # Main / Profile
     show_main,
+
+    # Experience Views
     show_experience,
     create_experience,
     edit_experience,
     delete_experience,
     show_experience_json,
     create_experience_ajax,
+
+    # Project Views
     show_project,
     create_project,
     edit_project,
@@ -15,16 +20,12 @@ from main.views import (
     show_json,
     get_projects_json,
     create_project_ajax,
+    toggle_star,
+
+    # Authentication Views
     register,
     login_user,
     logout_user,
-    toggle_star,
-
-    # DRF API Views
-    ExperienceListCreateAPIView,
-    ExperienceDetailAPIView,
-    ProjectListCreateAPIView,
-    ProjectDetailAPIView,
 )
 
 app_name = "main"
@@ -55,30 +56,4 @@ urlpatterns = [
     path("register/", register, name="register"),
     path("login/", login_user, name="login"),
     path("logout/", logout_user, name="logout"),
-
-    # ==================== REST API URLs (DRF) ====================
-
-    # Experience API
-    path(
-        "api/experiences/",
-        ExperienceListCreateAPIView.as_view(),
-        name="api_experience_list",
-    ),
-    path(
-        "api/experiences/<uuid:pk>/",
-        ExperienceDetailAPIView.as_view(),
-        name="api_experience_detail",
-    ),
-
-    # Project API
-    path(
-        "api/projects/",
-        ProjectListCreateAPIView.as_view(),
-        name="api_project_list",
-    ),
-    path(
-        "api/projects/<uuid:pk>/",
-        ProjectDetailAPIView.as_view(),
-        name="api_project_detail",
-    ),
 ]

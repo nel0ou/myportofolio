@@ -11,8 +11,10 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.core.exceptions import PermissionDenied
 
-from rest_framework import generics
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import BasePermission, SAFE_METHODS
+from rest_framework.response import Response
+from rest_framework import status
 
 from main.models import Experience, Project
 from main.forms import ProjectForm, ExperienceForm
@@ -30,7 +32,7 @@ def is_editor(user):
 class IsSuperuserOrReadOnly(BasePermission):
     """
     Semua pengguna boleh membaca data.
-    Hanya superuser yang boleh membuat perubahan.
+    Hanya superuser yang boleh mengubah data.
     """
 
     def has_permission(self, request, view):
@@ -129,7 +131,6 @@ def show_project(request):
 
 def get_projects_json(request):
     title_query = request.GET.get("title", "").strip()
-
     projects = Project.objects.prefetch_related("starred_by").all()
 
     if title_query:
@@ -141,7 +142,7 @@ def get_projects_json(request):
         starred_users = project.starred_by.all()
 
         is_starred = (
-            request.user in starred_users
+            project.starred_by.filter(pk=request.user.pk).exists()
             if request.user.is_authenticated
             else False
         )
@@ -156,7 +157,7 @@ def get_projects_json(request):
                 "title": project.title,
                 "description": project.description,
                 "tech_stack": project.tech_stack,
-                "link_url": getattr(project, "link_url", ""),
+                "link_url": project.link_url or "",
                 "star_count": starred_users.count(),
                 "is_starred": is_starred,
                 "starred_by_names": starred_by_names,
@@ -170,12 +171,7 @@ def get_projects_json(request):
 def create_project_ajax(request):
     if not request.user.is_superuser:
         return JsonResponse(
-            {
-                "message": (
-                    "Hanya pemilik portofolio yang dapat "
-                    "menambahkan proyek."
-                )
-            },
+            {"message": "Hanya pemilik portofolio yang dapat menambahkan proyek."},
             status=403,
         )
 
@@ -183,7 +179,6 @@ def create_project_ajax(request):
 
     if form.is_valid():
         project = form.save()
-
         return JsonResponse(
             {
                 "message": "Proyek berhasil ditambahkan.",
@@ -203,9 +198,9 @@ def create_project(request):
     if not request.user.is_superuser:
         raise PermissionDenied
 
-    form = ProjectForm(request.POST or None)
+    form = ProjectForm(request.POST or None, instance=None)
 
-    if form.is_valid() and request.method == "POST":
+    if request.method == "POST" and form.is_valid():
         form.save()
         return redirect("main:show_project")
 
@@ -225,7 +220,7 @@ def edit_project(request, id):
     project = get_object_or_404(Project, pk=id)
     form = ProjectForm(request.POST or None, instance=project)
 
-    if form.is_valid() and request.method == "POST":
+    if request.method == "POST" and form.is_valid():
         form.save()
         return redirect("main:show_project")
 
@@ -252,7 +247,6 @@ def delete_project(request, id):
 
 def show_json(request):
     data = Project.objects.all()
-
     return HttpResponse(
         serializers.serialize("json", data),
         content_type="application/json",
@@ -276,7 +270,6 @@ def show_experience(request):
 
 def show_experience_json(request):
     title_query = request.GET.get("title", "").strip()
-
     experiences = Experience.objects.all()
 
     if title_query:
@@ -285,33 +278,20 @@ def show_experience_json(request):
     data = []
 
     for exp in experiences:
-        start_str = (
-            exp.started_at.strftime("%Y-%m-%d")
-            if getattr(exp, "started_at", None)
-            else ""
-        )
-
-        end_str = (
-            exp.ended_at.strftime("%Y-%m-%d")
-            if getattr(exp, "ended_at", None)
-            else ""
-        )
-
-        category_val = ""
-
-        if hasattr(exp, "get_category_display"):
-            category_val = exp.get_category_display()
-        elif exp.category:
-            category_val = str(exp.category)
-
         data.append({
             "pk": str(exp.id),
             "fields": {
                 "title": exp.title,
                 "description": exp.description,
-                "category": category_val,
-                "started_at": start_str,
-                "ended_at": end_str,
+                "category": exp.get_category_display(),
+                "started_at": (
+                    exp.started_at.strftime("%Y-%m-%d")
+                    if exp.started_at else ""
+                ),
+                "ended_at": (
+                    exp.ended_at.strftime("%Y-%m-%d")
+                    if exp.ended_at else ""
+                ),
             },
         })
 
@@ -322,12 +302,7 @@ def show_experience_json(request):
 def create_experience_ajax(request):
     if not request.user.is_superuser:
         return JsonResponse(
-            {
-                "message": (
-                    "Hanya pemilik portofolio yang dapat "
-                    "menambahkan pengalaman."
-                )
-            },
+            {"message": "Hanya pemilik portofolio yang dapat menambahkan pengalaman."},
             status=403,
         )
 
@@ -335,7 +310,6 @@ def create_experience_ajax(request):
 
     if form.is_valid():
         experience = form.save()
-
         return JsonResponse(
             {
                 "message": "Pengalaman berhasil ditambahkan.",
@@ -357,7 +331,7 @@ def create_experience(request):
 
     form = ExperienceForm(request.POST or None)
 
-    if form.is_valid() and request.method == "POST":
+    if request.method == "POST" and form.is_valid():
         form.save()
         return redirect("main:show_experience")
 
@@ -377,7 +351,7 @@ def edit_experience(request, id):
     experience = get_object_or_404(Experience, pk=id)
     form = ExperienceForm(request.POST or None, instance=experience)
 
-    if form.is_valid() and request.method == "POST":
+    if request.method == "POST" and form.is_valid():
         form.save()
         return redirect("main:show_experience")
 
@@ -409,7 +383,7 @@ def delete_experience(request, id):
 def toggle_star(request, id):
     project = get_object_or_404(Project, pk=id)
 
-    if request.user in project.starred_by.all():
+    if project.starred_by.filter(pk=request.user.pk).exists():
         project.starred_by.remove(request.user)
     else:
         project.starred_by.add(request.user)
@@ -419,44 +393,129 @@ def toggle_star(request, id):
 
 # ==================== REST API VIEWS (DRF) ====================
 
-# Experience API
+# EXPERIENCE API
 
-class ExperienceListCreateAPIView(generics.ListCreateAPIView):
-    serializer_class = ExperienceSerializer
-    permission_classes = [IsSuperuserOrReadOnly]
+@api_view(["GET", "POST"])
+@permission_classes([IsSuperuserOrReadOnly])
+def experience_list_create_api(request):
+    if request.method == "GET":
+        experiences = Experience.objects.prefetch_related("starred_by").all()
 
-    def get_queryset(self):
-        queryset = Experience.objects.all()
-        title = self.request.query_params.get("title", "").strip()
-
+        title = request.query_params.get("title", "").strip()
         if title:
-            queryset = queryset.filter(title__icontains=title)
+            experiences = experiences.filter(title__icontains=title)
 
-        return queryset
+        serializer = ExperienceSerializer(
+            experiences,
+            many=True,
+            context={"request": request},
+        )
+        return Response(serializer.data)
+
+    serializer = ExperienceSerializer(
+        data=request.data,
+        context={"request": request},
+    )
+
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ExperienceDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Experience.objects.all()
-    serializer_class = ExperienceSerializer
-    permission_classes = [IsSuperuserOrReadOnly]
+@api_view(["GET", "PUT", "PATCH", "DELETE"])
+@permission_classes([IsSuperuserOrReadOnly])
+def experience_detail_api(request, id):
+    experience = get_object_or_404(
+        Experience.objects.prefetch_related("starred_by"),
+        pk=id,
+    )
+
+    if request.method == "GET":
+        serializer = ExperienceSerializer(
+            experience,
+            context={"request": request},
+        )
+        return Response(serializer.data)
+
+    if request.method in ["PUT", "PATCH"]:
+        serializer = ExperienceSerializer(
+            experience,
+            data=request.data,
+            partial=request.method == "PATCH",
+            context={"request": request},
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    experience.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-# Project API
+# PROJECT API
 
-class ProjectListCreateAPIView(generics.ListCreateAPIView):
-    serializer_class = ProjectSerializer
-    permission_classes = [IsSuperuserOrReadOnly]
+@api_view(["GET", "POST"])
+@permission_classes([IsSuperuserOrReadOnly])
+def project_list_create_api(request):
+    if request.method == "GET":
+        projects = Project.objects.prefetch_related("starred_by").all()
 
-    def get_queryset(self):
-        queryset = Project.objects.prefetch_related("starred_by").all()
-        title = self.request.query_params.get("title", "").strip()
-
+        title = request.query_params.get("title", "").strip()
         if title:
-            queryset = queryset.filter(title__icontains=title)
+            projects = projects.filter(title__icontains=title)
 
-        return queryset
+        serializer = ProjectSerializer(
+            projects,
+            many=True,
+            context={"request": request},
+        )
+        return Response(serializer.data)
 
-class ProjectDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Project.objects.prefetch_related("starred_by").all()
-    serializer_class = ProjectSerializer
-    permission_classes = [IsSuperuserOrReadOnly]
+    serializer = ProjectSerializer(
+        data=request.data,
+        context={"request": request},
+    )
+
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["GET", "PUT", "PATCH", "DELETE"])
+@permission_classes([IsSuperuserOrReadOnly])
+def project_detail_api(request, id):
+    project = get_object_or_404(
+        Project.objects.prefetch_related("starred_by"),
+        pk=id,
+    )
+
+    if request.method == "GET":
+        serializer = ProjectSerializer(
+            project,
+            context={"request": request},
+        )
+        return Response(serializer.data)
+
+    if request.method in ["PUT", "PATCH"]:
+        serializer = ProjectSerializer(
+            project,
+            data=request.data,
+            partial=request.method == "PATCH",
+            context={"request": request},
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    project.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
