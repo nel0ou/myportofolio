@@ -1,4 +1,3 @@
-
 from django.contrib.auth.models import User, Group
 from django.test import TestCase
 from rest_framework.test import APIClient
@@ -106,6 +105,8 @@ class ExperienceAPITest(TestCase):
 
     # 5. Visitor tidak dapat membuat Experience
     def test_visitor_cannot_create_experience(self):
+        count_before = Experience.objects.count()
+
         response = self.client.post(
             self.list_url,
             {
@@ -116,11 +117,15 @@ class ExperienceAPITest(TestCase):
             format="json",
         )
 
+        count_after = Experience.objects.count()
+
         self.assertEqual(response.status_code, 403)
+        self.assertEqual(count_after, count_before)
 
     # 6. Pengguna biasa tidak dapat membuat Experience
     def test_regular_user_cannot_create_experience(self):
         self.client.force_authenticate(user=self.user)
+        count_before = Experience.objects.count()
 
         response = self.client.post(
             self.list_url,
@@ -132,11 +137,15 @@ class ExperienceAPITest(TestCase):
             format="json",
         )
 
+        count_after = Experience.objects.count()
+
         self.assertEqual(response.status_code, 403)
+        self.assertEqual(count_after, count_before)
 
     # 7. Editor tidak dapat membuat Experience
     def test_editor_cannot_create_experience(self):
         self.client.force_authenticate(user=self.editor)
+        count_before = Experience.objects.count()
 
         response = self.client.post(
             self.list_url,
@@ -148,7 +157,10 @@ class ExperienceAPITest(TestCase):
             format="json",
         )
 
+        count_after = Experience.objects.count()
+
         self.assertEqual(response.status_code, 403)
+        self.assertEqual(count_after, count_before)
 
     # 8. Editor dapat mengedit Experience menggunakan PATCH
     def test_editor_can_patch_experience(self):
@@ -183,6 +195,7 @@ class ExperienceAPITest(TestCase):
     # 10. Pengguna biasa tidak dapat mengedit Experience
     def test_regular_user_cannot_edit_experience(self):
         self.client.force_authenticate(user=self.user)
+        original_title = self.experience.title
 
         response = self.client.patch(
             self.detail_url,
@@ -190,7 +203,13 @@ class ExperienceAPITest(TestCase):
             format="json",
         )
 
+        self.experience.refresh_from_db()
+
         self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            self.experience.title,
+            original_title,
+        )
 
     # 11. Superuser dapat melakukan PUT
     def test_superuser_put_experience(self):
@@ -244,8 +263,7 @@ class ExperienceAPITest(TestCase):
             Experience.objects.filter(pk=self.experience.pk).exists()
         )
 
-    # 14. Superuser dapat membuat Experience
-    # dengan category yang valid dan input HTML dibersihkan
+    # 14. Serializer membersihkan input HTML
     def test_experience_serializer_validation(self):
         self.client.force_authenticate(user=self.superuser)
 
@@ -281,6 +299,7 @@ class ExperienceAPITest(TestCase):
         )
 
         self.assertEqual(response.status_code, 400)
+        self.assertEqual(Experience.objects.count(), 1)
 
     # 16. Pengguna login dapat memberikan dan membatalkan star
     def test_user_can_toggle_experience_star(self):
@@ -311,6 +330,10 @@ class ExperienceAPITest(TestCase):
         response = self.client.post(self.star_url)
 
         self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            self.experience.starred_by.count(),
+            0,
+        )
 
     # 18. Field star tidak dapat diubah melalui input
     def test_experience_star_fields_are_read_only(self):
@@ -371,6 +394,11 @@ class ExperienceCSRFApiTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 403)
+        self.assertFalse(
+            Experience.objects.filter(
+                title="Experience CSRF"
+            ).exists()
+        )
 
 
 # =====================================================
@@ -400,7 +428,7 @@ class ProjectAPITest(TestCase):
             link_url="https://example.com",
         )
 
-        # URL Project Tutorial 07 tetap menggunakan /api/
+        # URL Project Tutorial 07
         self.list_url = "/api/projects/"
         self.detail_url = f"/api/projects/{self.project.id}/"
 
@@ -410,7 +438,6 @@ class ProjectAPITest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data), 1)
-
         self.assertNotIn("password", str(response.data))
 
     # 2. Semua pengguna dapat melihat detail Project
@@ -442,6 +469,9 @@ class ProjectAPITest(TestCase):
     def test_regular_user_cannot_manage_project(self):
         self.client.force_authenticate(user=self.user)
 
+        original_count = Project.objects.count()
+        original_title = self.project.title
+
         response = self.client.post(
             self.list_url,
             {
@@ -453,6 +483,7 @@ class ProjectAPITest(TestCase):
         )
 
         self.assertEqual(response.status_code, 403)
+        self.assertEqual(Project.objects.count(), original_count)
 
         response = self.client.put(
             self.detail_url,
@@ -474,9 +505,15 @@ class ProjectAPITest(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
+        self.project.refresh_from_db()
+        self.assertEqual(self.project.title, original_title)
+
         response = self.client.delete(self.detail_url)
 
         self.assertEqual(response.status_code, 403)
+        self.assertTrue(
+            Project.objects.filter(pk=self.project.pk).exists()
+        )
 
     # 5. Superuser dapat membuat, PUT, PATCH, dan DELETE Project
     def test_superuser_project_crud(self):
@@ -522,6 +559,9 @@ class ProjectAPITest(TestCase):
         response = self.client.delete(detail_url)
 
         self.assertEqual(response.status_code, 204)
+        self.assertFalse(
+            Project.objects.filter(pk=new_project_id).exists()
+        )
 
     # 6. Field star tidak dapat diubah melalui API
     def test_project_star_fields_read_only(self):
@@ -578,3 +618,8 @@ class ProjectCSRFApiTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 403)
+        self.assertFalse(
+            Project.objects.filter(
+                title="Project CSRF"
+            ).exists()
+        )
