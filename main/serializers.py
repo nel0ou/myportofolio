@@ -12,26 +12,26 @@ class ExperienceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Experience
         fields = [
-            'id',
-            'title',
-            'description',
-            'category',
-            'started_at',
-            'ended_at',
-            'star_count',
-            'is_starred',
+            "id",
+            "title",
+            "description",
+            "category",
+            "started_at",
+            "ended_at",
+            "star_count",
+            "is_starred",
         ]
         read_only_fields = [
-            'id',
-            'star_count',
-            'is_starred',
+            "id",
+            "star_count",
+            "is_starred",
         ]
 
     def get_star_count(self, obj):
         return obj.starred_by.count()
 
     def get_is_starred(self, obj):
-        request = self.context.get('request')
+        request = self.context.get("request")
 
         if request and request.user.is_authenticated:
             return obj.starred_by.filter(
@@ -60,6 +60,9 @@ class ExperienceSerializer(serializers.ModelSerializer):
 
         return cleaned_value
 
+    def validate_category(self, value):
+        return strip_tags(value).strip()
+
 
 class ProjectSerializer(serializers.ModelSerializer):
     star_count = serializers.SerializerMethodField()
@@ -67,14 +70,17 @@ class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = [
-            'id',
-            'title',
-            'description',
-            'tech_stack',
-            'link_url',
-            'star_count',
+            "id",
+            "title",
+            "description",
+            "tech_stack",
+            "link_url",
+            "star_count",
         ]
-        read_only_fields = ['id', 'star_count']
+        read_only_fields = [
+            "id",
+            "star_count",
+        ]
 
     def get_star_count(self, obj):
         return obj.starred_by.count()
