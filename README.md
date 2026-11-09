@@ -225,3 +225,108 @@ Aplikasi portofolio ini menerapkan sistem pengontrolan akses pengguna berdasarka
   * *Perbaikan Manual:* 
     1. **Debugging Static Files:** Masalah pemuatan berkas `utils.js` yang menghasilkan error `404 Not Found` tidak cukup diselesaikan dengan saran umum AI. Saya memeriksa ulang struktur direktori proyek secara mandiri, memindahkan berkas ke folder `main/static/js/`, dan memastikan pemanggilan tag `{% static 'js/utils.js' %}` terpasang dengan benar di `base.html`.
     2. **Penanganan Error Runtime Date/Time (Backend):** AI sempat menyarankan pemanggilan `.strftime()` secara langsung yang memicu *crash* `500 Internal Server Error` saat tanggal bernilai kosong. Saya melakukan perbaikan manual di `views.py` dengan menambahkan pengecekan kondisional eksplisit menggunakan `getattr()` untuk mengamankan nilai tanggal yang bernilai `None`.
+
+### Tugas 6
+
+**1. Jelaskan apa yang dimaksud dengan REST dan mengapa mengembalikan JSON saja belum cukup untuk menyebut sebuah API sebagai RESTful! Jelaskan pula perbedaan PUT dan PATCH beserta contoh kapan masing-masing sebaiknya digunakan!**
+
+REST (*Representational State Transfer*) merupakan gaya arsitektur yang digunakan dalam pengembangan API untuk mengatur komunikasi antara client dan server. REST menggunakan resource yang dapat diakses melalui URL serta HTTP methods seperti GET, POST, PUT, PATCH, dan DELETE untuk melakukan operasi terhadap data.
+
+Mengembalikan data dalam format JSON saja belum cukup untuk menyebut sebuah API sebagai RESTful karena JSON hanya merupakan format pertukaran data. API juga perlu menerapkan prinsip REST, seperti:
+
+- **Resource-based:** Setiap data atau resource memiliki URL yang jelas.
+- **HTTP Methods:** Penggunaan method HTTP harus sesuai dengan fungsinya.
+- **Stateless:** Setiap request harus membawa informasi yang diperlukan untuk diproses tanpa bergantung pada konteks request sebelumnya.
+- **HTTP Status Code:** Server memberikan status code yang sesuai dengan hasil pemrosesan request.
+
+Perbedaan PUT dan PATCH terletak pada cakupan perubahan data:
+
+- **PUT:** Digunakan untuk memperbarui keseluruhan representasi resource. Contohnya, ketika ingin memperbarui seluruh informasi pengalaman kerja, seperti title, description, category, started_at, dan ended_at.
+- **PATCH:** Digunakan untuk memperbarui sebagian data tanpa harus mengirimkan seluruh field. Contohnya, ketika hanya ingin mengubah title pengalaman kerja tanpa mengubah deskripsi dan tanggalnya.
+
+Pada implementasi Experience API, kedua method tersebut digunakan melalui endpoint detail Experience berdasarkan UUID.
+
+**2. Jelaskan peran serializer pada Django REST Framework! Apa keuntungannya dibandingkan merakit dictionary secara manual dengan JsonResponse seperti pada Tutorial 05?**
+
+Serializer pada Django REST Framework berfungsi untuk mengubah objek model Django menjadi format data yang dapat dikirimkan melalui API, seperti JSON. Serializer juga dapat melakukan proses sebaliknya, yaitu menerima data dari client, melakukan validasi, dan mengubahnya menjadi objek yang dapat disimpan ke database.
+
+Dalam proyek ini, saya menggunakan `ExperienceSerializer` dengan `ModelSerializer` untuk mengelola data dari model Experience. Serializer tersebut juga digunakan untuk melakukan validasi pada field title dan description serta menampilkan informasi tambahan berupa `star_count` dan `is_starred`.
+
+Dibandingkan menyusun dictionary secara manual menggunakan `JsonResponse` seperti pada Tutorial 05, serializer memiliki beberapa keuntungan:
+
+- **Lebih praktis:** `ModelSerializer` dapat mengambil field dari model secara otomatis sehingga tidak perlu menyusun dictionary satu per satu.
+- **Validasi data:** Serializer dapat memeriksa input yang dikirimkan client sebelum data disimpan ke database.
+- **Konsistensi data:** Struktur JSON yang dihasilkan lebih teratur dan konsisten.
+- **Mendukung operasi CRUD:** Serializer menyediakan method seperti `create()` dan `update()` untuk membantu proses penambahan dan pembaruan data.
+- **Mudah dikembangkan:** Perubahan field pada model dapat disesuaikan melalui konfigurasi serializer.
+
+Dengan demikian, serializer membuat proses pengelolaan dan pertukaran data menjadi lebih terstruktur serta mudah dipelihara.
+
+**3. Jelaskan perbedaan autentikasi dan otorisasi pada Django REST Framework! Mengapa hak akses harus diperiksa dengan permission class di server, bukan hanya dengan menyembunyikan tombol di template?**
+
+Autentikasi (*authentication*) dan otorisasi (*authorization*) merupakan dua konsep keamanan yang berbeda.
+
+- **Autentikasi:** Proses untuk memverifikasi identitas pengguna yang mengakses aplikasi. Tujuannya adalah mengetahui siapa pengguna yang melakukan request.
+- **Otorisasi:** Proses untuk menentukan tindakan apa saja yang boleh dilakukan oleh pengguna berdasarkan identitas dan hak aksesnya.
+
+Pada proyek ini, autentikasi diterapkan menggunakan `SessionAuthentication`, sedangkan pengaturan hak akses dilakukan menggunakan custom permission class `IsPortfolioOwnerOrEditorOrReadOnly`.
+
+Pembagian hak akses pada Experience API adalah sebagai berikut:
+
+1. **Guest:** Dapat melihat data Experience tanpa melakukan perubahan.
+2. **Registered User:** Dapat melihat data dan menggunakan fitur star setelah login.
+3. **Editor:** Dapat melihat data, menggunakan fitur star, serta memperbarui data menggunakan PUT dan PATCH.
+4. **Superuser:** Memiliki hak akses penuh, termasuk menambahkan, membaca, memperbarui, dan menghapus data Experience.
+
+Hak akses harus diperiksa melalui permission class di sisi server karena menyembunyikan tombol pada template hanya membatasi tampilan antarmuka, bukan benar-benar mengamankan endpoint API.
+
+Pengguna masih dapat mencoba mengakses endpoint secara langsung melalui browser atau aplikasi lain tanpa menggunakan tombol pada website. Oleh karena itu, server harus tetap memeriksa izin setiap kali menerima request.
+
+Dengan permission class, server dapat menolak request yang tidak memiliki izin dan memberikan respons HTTP 403 Forbidden. Hal ini membuat keamanan aplikasi tidak hanya bergantung pada tampilan frontend.
+
+**4. Jelaskan mengapa permintaan yang mengubah data tetap memerlukan token CSRF ketika API memakai SessionAuthentication! Mengapa test yang memakai force_authenticate tidak cukup untuk membuktikan bahwa perlindungan CSRF berjalan?**
+
+CSRF (*Cross-Site Request Forgery*) merupakan serangan yang memanfaatkan kondisi ketika pengguna sedang memiliki sesi login untuk mengirimkan request yang tidak diinginkan ke suatu aplikasi.
+
+Pada Django REST Framework, `SessionAuthentication` menggunakan session dan cookie untuk mengenali pengguna yang sudah login. Browser dapat mengirimkan cookie session secara otomatis ketika melakukan request ke website yang sama. Kondisi ini dapat dimanfaatkan oleh pihak lain untuk mencoba mengirimkan request tanpa persetujuan pengguna.
+
+Oleh karena itu, request yang mengubah data seperti POST, PUT, PATCH, dan DELETE tetap memerlukan token CSRF. Token tersebut digunakan untuk memastikan bahwa request memiliki token perlindungan yang valid, bukan hanya mengandalkan cookie session.
+
+Penggunaan `force_authenticate()` dalam pengujian API tidak cukup untuk membuktikan bahwa perlindungan CSRF berjalan karena metode tersebut secara langsung menetapkan pengguna sebagai pengguna yang sudah terautentikasi. Dengan demikian, proses autentikasi normal melalui `SessionAuthentication`, termasuk pemeriksaan CSRF, tidak dijalankan seperti pada request biasa.
+
+Untuk menguji perlindungan CSRF secara tepat, pengujian perlu menggunakan session authentication melalui proses login dan mengaktifkan pemeriksaan CSRF pada test client. Selanjutnya, request yang mengubah data dapat diuji menggunakan token CSRF yang valid maupun tanpa token untuk memastikan bahwa request tanpa perlindungan yang sesuai ditolak oleh server.
+
+---
+
+**### AI Disclosure & Transparansi Kolaborasi AI (Tugas 6)**
+
+- **Tools AI yang Digunakan:** ChatGPT dan Google Gemini.
+
+- **Strategi Prompting:**
+  1. **Context Feeding:** Memberikan instruksi Tugas 6 serta struktur proyek Django, termasuk model Experience, serializer, API views, permissions, dan URL routing.
+  2. **Step-by-step Guidance:** Meminta penjelasan bertahap mengenai REST API, Django REST Framework, serializer, autentikasi, otorisasi, dan CSRF.
+  3. **Debugging Berbasis Error:** Mengirimkan pesan error dan hasil terminal untuk membantu mengidentifikasi penyebab masalah.
+  4. **Code Review:** Meminta AI memeriksa implementasi serializer, endpoint CRUD, permission, dan integrasi frontend.
+  5. **Testing Guidance:** Meminta arahan untuk menjalankan automated tests dan menguji fitur secara langsung melalui browser.
+
+- **Bagian Spesifik yang Dibantu AI:**
+  - Membantu memahami konsep REST dan perbedaan HTTP methods PUT dan PATCH.
+  - Memberikan arahan implementasi `ExperienceSerializer` menggunakan `ModelSerializer`.
+  - Membantu merancang endpoint CRUD pada `api_views.py`.
+  - Membantu memahami custom permission dan pembagian hak akses pengguna.
+  - Membantu mengintegrasikan REST API dengan halaman `experience.html`.
+  - Memberikan panduan pengujian API dan debugging.
+
+- **Keterbatasan AI & Analisis Kritis Mandiri (Perbaikan Manual):**
+  - **Keterbatasan AI:** Saran AI terkadang menggunakan asumsi umum yang belum tentu sesuai dengan struktur proyek Django yang sedang dikembangkan. Kode yang diberikan juga tetap perlu diperiksa agar tidak mengganggu fitur dari tugas sebelumnya.
+  - **Penyesuaian URL Routing:** Memeriksa dan menyesuaikan pemisahan URL halaman website dan URL REST API agar tidak terjadi konflik dengan routing yang sudah ada.
+  - **Pemeriksaan Hak Akses:** Memastikan pembatasan akses dilakukan melalui permission di backend, bukan hanya menyembunyikan tombol pada frontend.
+  - **Pengujian Manual:** Menjalankan `python manage.py check`, menguji 26 automated tests, serta mencoba fitur star, tambah, edit, dan hapus secara langsung melalui browser.
+  - **Verifikasi Git:** Memeriksa perubahan menggunakan `git status`, membuat commit, dan melakukan push ke GitHub setelah pengujian berhasil.
+
+Melalui proses ini, saya memahami bahwa AI dapat membantu mempercepat pemahaman konsep dan proses debugging, tetapi hasilnya tetap perlu diperiksa, disesuaikan, dan diuji secara mandiri oleh pengembang.
+
+- **Riwayat Prompt dan Percakapan AI:**
+  - ChatGPT: https://chatgpt.com/share/6af12609-7e54-83ec-8167-b21ef9c7165d
+
+Riwayat prompt lengkap disertakan secara manual sebagai dokumentasi penggunaan AI, termasuk prompt yang diberikan dan respons AI selama proses pengerjaan.
