@@ -4,7 +4,13 @@
 {% block title %}Experience - {{ name }}{% endblock %}
 
 {% block content %}
-<section class="experience-section" id="experience">
+<section
+    class="experience-section"
+    id="experience"
+    data-is-superuser="{{ user.is_superuser|yesno:'true,false' }}"
+    data-is-editor="{{ is_editor|yesno:'true,false' }}"
+    data-is-authenticated="{{ user.is_authenticated|yesno:'true,false' }}"
+>
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
         <h2 class="section-title" style="margin-bottom:0;">Experience</h2>
 
@@ -26,9 +32,17 @@
         <button type="submit" class="button">Cari</button>
     </form>
 
-    <div id="loading" class="hide"><p>Memuat pengalaman...</p></div>
-    <div id="error" class="hide"><p>Gagal memuat data. Silakan coba lagi.</p></div>
-    <div id="empty" class="hide"><p>Belum ada pengalaman yang ditampilkan.</p></div>
+    <div id="loading" class="hide">
+        <p>Memuat pengalaman...</p>
+    </div>
+
+    <div id="error" class="hide">
+        <p>Gagal memuat data. Silakan coba lagi.</p>
+    </div>
+
+    <div id="empty" class="hide">
+        <p>Belum ada pengalaman yang ditampilkan.</p>
+    </div>
 
     <div id="timeline-container" class="timeline hide"></div>
 </section>
@@ -39,10 +53,15 @@
 
 <script>
 const API_ENDPOINT = "/api/v1/experiences/";
-const IS_SUPERUSER = {{ user.is_superuser|yesno:"true,false" }};
-const IS_EDITOR = {{ is_editor|yesno:"true,false" }};
-const IS_AUTHENTICATED = {{ user.is_authenticated|yesno:"true,false" }};
 
+// Mengambil informasi hak akses dari atribut HTML
+const experienceSection = document.getElementById("experience");
+
+const IS_SUPERUSER = experienceSection.dataset.isSuperuser === "true";
+const IS_EDITOR = experienceSection.dataset.isEditor === "true";
+const IS_AUTHENTICATED = experienceSection.dataset.isAuthenticated === "true";
+
+// Mengambil elemen HTML
 const loadingState = document.getElementById("loading");
 const errorState = document.getElementById("error");
 const emptyState = document.getElementById("empty");
@@ -54,6 +73,8 @@ const experienceForm = document.getElementById("experience-form");
 let searchTimer;
 let abortController;
 
+
+// Mengatur tampilan berdasarkan kondisi data
 function displayState(state) {
     loadingState.classList.toggle("hide", state !== "loading");
     errorState.classList.toggle("hide", state !== "error");
@@ -61,6 +82,8 @@ function displayState(state) {
     timelineContainer.classList.toggle("hide", state !== "timeline");
 }
 
+
+// Mengambil CSRF token dari cookie
 function getCookie(name) {
     const cookies = document.cookie ? document.cookie.split(";") : [];
 
@@ -75,12 +98,8 @@ function getCookie(name) {
     return null;
 }
 
-function escapeHtml(value) {
-    const div = document.createElement("div");
-    div.textContent = value ?? "";
-    return div.innerHTML;
-}
 
+// Header untuk request API
 function apiHeaders() {
     return {
         "Accept": "application/json",
@@ -88,6 +107,16 @@ function apiHeaders() {
     };
 }
 
+
+// Mengamankan teks sebelum dimasukkan ke HTML
+function escapeHtml(value) {
+    const div = document.createElement("div");
+    div.textContent = value ?? "";
+    return div.innerHTML;
+}
+
+
+// Membuat kartu Experience
 function createExperienceCard(exp) {
     const article = document.createElement("article");
     article.className = "timeline-item";
@@ -97,6 +126,7 @@ function createExperienceCard(exp) {
         exp.ended_at || (exp.started_at ? "Sekarang" : "")
     ].filter(Boolean).join(" - ");
 
+    // Tombol Edit hanya untuk Editor dan Superuser
     const editButton = (IS_SUPERUSER || IS_EDITOR)
         ? `<button type="button" data-action="edit"
              style="background:#ffc107;color:black;padding:.3rem .6rem;border:0;border-radius:4px;cursor:pointer;">
@@ -104,6 +134,7 @@ function createExperienceCard(exp) {
            </button>`
         : "";
 
+    // Tombol Hapus hanya untuk Superuser
     const deleteButton = IS_SUPERUSER
         ? `<button type="button" data-action="delete"
              style="background:#dc3545;color:white;padding:.3rem .6rem;border:0;border-radius:4px;cursor:pointer;">
@@ -111,6 +142,7 @@ function createExperienceCard(exp) {
            </button>`
         : "";
 
+    // Tombol Star untuk pengguna yang sudah login
     const starButton = IS_AUTHENTICATED
         ? `<button type="button" data-action="star"
              style="padding:.3rem .6rem;border:1px solid var(--line);border-radius:4px;cursor:pointer;">
@@ -125,6 +157,7 @@ function createExperienceCard(exp) {
             <h3>${escapeHtml(exp.title)}</h3>
             <p class="timeline-org">${escapeHtml(exp.category)}</p>
             <p>${escapeHtml(exp.description)}</p>
+
             <div style="margin-top:1rem;display:flex;gap:.5rem;flex-wrap:wrap;">
                 ${starButton}
                 ${editButton}
@@ -133,6 +166,7 @@ function createExperienceCard(exp) {
         </div>
     `;
 
+    // Menyimpan data Experience pada elemen kartu
     article.dataset.id = exp.id;
     article.dataset.title = exp.title;
     article.dataset.description = exp.description;
@@ -143,8 +177,13 @@ function createExperienceCard(exp) {
     return article;
 }
 
+
+// Mengambil data Experience dari REST API
 async function fetchExperiences(query = "") {
-    if (abortController) abortController.abort();
+    if (abortController) {
+        abortController.abort();
+    }
+
     abortController = new AbortController();
 
     displayState("loading");
@@ -155,11 +194,15 @@ async function fetchExperiences(query = "") {
             : API_ENDPOINT;
 
         const response = await fetch(url, {
-            headers: {"Accept": "application/json"},
+            headers: {
+                "Accept": "application/json"
+            },
             signal: abortController.signal
         });
 
-        if (!response.ok) throw new Error("Gagal mengambil data");
+        if (!response.ok) {
+            throw new Error("Gagal mengambil data");
+        }
 
         const data = await response.json();
 
@@ -175,6 +218,7 @@ async function fetchExperiences(query = "") {
         });
 
         displayState("timeline");
+
     } catch (error) {
         if (error.name !== "AbortError") {
             displayState("error");
@@ -182,6 +226,8 @@ async function fetchExperiences(query = "") {
     }
 }
 
+
+// Menambahkan atau membatalkan Star
 async function toggleStar(id) {
     try {
         const response = await fetch(`${API_ENDPOINT}${id}/star/`, {
@@ -189,16 +235,23 @@ async function toggleStar(id) {
             headers: apiHeaders()
         });
 
-        if (!response.ok) throw new Error("Gagal memperbarui star");
+        if (!response.ok) {
+            throw new Error("Gagal memperbarui star");
+        }
 
         await fetchExperiences(searchInput.value.trim());
+
     } catch (error) {
         alert("Gagal memperbarui star. Pastikan kamu sudah login.");
     }
 }
 
+
+// Menghapus Experience
 async function deleteExperience(id) {
-    if (!confirm("Yakin ingin menghapus pengalaman ini?")) return;
+    if (!confirm("Yakin ingin menghapus pengalaman ini?")) {
+        return;
+    }
 
     try {
         const response = await fetch(`${API_ENDPOINT}${id}/`, {
@@ -206,14 +259,19 @@ async function deleteExperience(id) {
             headers: apiHeaders()
         });
 
-        if (!response.ok) throw new Error("Gagal menghapus");
+        if (!response.ok) {
+            throw new Error("Gagal menghapus");
+        }
 
         await fetchExperiences(searchInput.value.trim());
+
     } catch (error) {
         alert("Gagal menghapus Experience.");
     }
 }
 
+
+// Mengedit Experience
 function editExperience(card) {
     const id = card.dataset.id;
 
@@ -227,6 +285,7 @@ function editExperience(card) {
         "Kategori (internship/research/volunteer/part-time/full-time/freelance):",
         card.dataset.category
     );
+
     if (category === null) return;
 
     updateExperience(id, {
@@ -238,6 +297,8 @@ function editExperience(card) {
     });
 }
 
+
+// Mengirim perubahan Experience ke REST API
 async function updateExperience(id, data) {
     try {
         const response = await fetch(`${API_ENDPOINT}${id}/`, {
@@ -256,24 +317,38 @@ async function updateExperience(id, data) {
         }
 
         await fetchExperiences(searchInput.value.trim());
+
     } catch (error) {
         alert("Gagal mengedit Experience. Periksa kembali data yang dimasukkan.");
     }
 }
 
+
+// Event listener untuk tombol Star, Edit, dan Hapus
 timelineContainer.addEventListener("click", function(event) {
     const button = event.target.closest("button[data-action]");
+
     if (!button) return;
 
     const card = button.closest(".timeline-item");
     const id = card.dataset.id;
     const action = button.dataset.action;
 
-    if (action === "star") toggleStar(id);
-    if (action === "delete") deleteExperience(id);
-    if (action === "edit") editExperience(card);
+    if (action === "star") {
+        toggleStar(id);
+    }
+
+    if (action === "delete") {
+        deleteExperience(id);
+    }
+
+    if (action === "edit") {
+        editExperience(card);
+    }
 });
 
+
+// Menambahkan Experience melalui form
 if (experienceForm) {
     experienceForm.addEventListener("submit", async function(event) {
         event.preventDefault();
@@ -295,18 +370,24 @@ if (experienceForm) {
             }
 
             experienceForm.reset();
+
             document.getElementById("add-experience-modal").hidePopover();
 
             await fetchExperiences(searchInput.value.trim());
+
             alert("Experience berhasil ditambahkan!");
+
         } catch (error) {
             alert("Gagal menambahkan Experience. Periksa kembali data.");
+
         } finally {
             button.disabled = false;
         }
     });
 }
 
+
+// Debouncing untuk fitur pencarian
 searchInput.addEventListener("input", function() {
     clearTimeout(searchTimer);
 
@@ -315,12 +396,19 @@ searchInput.addEventListener("input", function() {
     }, 300);
 });
 
+
+// Menangani pencarian melalui tombol Cari
 searchForm.addEventListener("submit", function(event) {
     event.preventDefault();
+
     clearTimeout(searchTimer);
+
     fetchExperiences(searchInput.value.trim());
 });
 
+
+// Memuat data Experience saat halaman dibuka
 fetchExperiences(searchInput.value.trim());
+
 </script>
 {% endblock %}

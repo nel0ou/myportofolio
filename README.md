@@ -321,7 +321,7 @@ Untuk menguji perlindungan CSRF secara tepat, pengujian perlu menggunakan sessio
   - **Keterbatasan AI:** Saran AI terkadang menggunakan asumsi umum yang belum tentu sesuai dengan struktur proyek Django yang sedang dikembangkan. Kode yang diberikan juga tetap perlu diperiksa agar tidak mengganggu fitur dari tugas sebelumnya.
   - **Penyesuaian URL Routing:** Memeriksa dan menyesuaikan pemisahan URL halaman website dan URL REST API agar tidak terjadi konflik dengan routing yang sudah ada.
   - **Pemeriksaan Hak Akses:** Memastikan pembatasan akses dilakukan melalui permission di backend, bukan hanya menyembunyikan tombol pada frontend.
-  - **Pengujian Manual:** Menjalankan `python manage.py check`, menguji 26 automated tests, serta mencoba fitur star, tambah, edit, dan hapus secara langsung melalui browser.
+  - **Pengujian Manual:** Menjalankan `python manage.py check`, menguji 29 automated tests, serta mencoba fitur star, tambah, edit, dan hapus secara langsung melalui browser.
   - **Verifikasi Git:** Memeriksa perubahan menggunakan `git status`, membuat commit, dan melakukan push ke GitHub setelah pengujian berhasil.
 
 Melalui proses ini, saya memahami bahwa AI dapat membantu mempercepat pemahaman konsep dan proses debugging, tetapi hasilnya tetap perlu diperiksa, disesuaikan, dan diuji secara mandiri oleh pengembang.
